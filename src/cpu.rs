@@ -217,30 +217,55 @@ mod test {
         assert_eq!(cpu.status & 0b0100_0000, 0b0100_0000);
     }
 
-    // TODO: Fix this
     #[test]
     fn test_adc_carry_out_and_no_overflow() {
         let mut cpu = CPU::new();
         cpu.register_a = 0x50;
-        cpu.status = cpu.status | 0b1;
+        cpu.status = cpu.status | 0b1; // set carry in
         cpu.interpret(vec![0x69, 0xd0, 0x00]);
 
         assert_eq!(cpu.register_a, 0x21);
         assert_eq!(cpu.status & 0b0000_0001, 1);
-        assert_eq!(cpu.status & 0b0100_0000, 0);
+        assert_eq!(cpu.status & 0b0100_0000, 0); // can't overflow if we're adding pos and neg
     }
 
-    // TODO: Change this
     #[test]
     fn test_adc_no_carry_out_and_overflow() {
         let mut cpu = CPU::new();
-        cpu.register_x = 0xff;
-        cpu.interpret(vec![0xe8, 0xe8, 0x00]);
+        cpu.register_a = 0x50;
+        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.interpret(vec![0x69, 0x50, 0x00]);
 
-        assert_eq!(cpu.register_x, 1)
+        assert_eq!(cpu.register_a, 0xa1);
+        assert_eq!(cpu.status & 0b0000_0001, 0);
+        assert_eq!(cpu.status & 0b0100_0000, 0b0100_0000);
     }
 
     // TODO: Add cases to check if carry out and overflow
     // flag is set due to the existence of a carry in bit
     // (i.e. reg_a = 127 + mem_val = 128 + carry_bit = 1)
+
+    #[test]
+    fn test_carry_in_sets_carry_out() {
+        let mut cpu = CPU::new();
+        cpu.register_a = 0x60;
+        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.interpret(vec![0x69, 0x9f, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x0);
+        assert_eq!(cpu.status & 0b0000_0001, 1);
+        assert_eq!(cpu.status & 0b0100_0000, 0);
+    }
+
+    #[test]
+    fn test_carry_in_sets_overflow() {
+        let mut cpu = CPU::new();
+        cpu.register_a = 0x46;
+        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.interpret(vec![0x69, 0x39, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x80);
+        assert_eq!(cpu.status & 0b0000_0001, 0);
+        assert_eq!(cpu.status & 0b0100_0000, 0b0100_0000);
+    }
 }
