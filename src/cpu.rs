@@ -36,24 +36,30 @@ impl CPU {
     /// results to
     #[inline]
     fn adc(&mut self, value: u8) {
-        let input_carry = (self.status & 0b0000_0001) == 0b0000_0001;
-        let output_carry = (self.register_a > (0xFF - value))
-            | ((self.register_a == (0xFF - value)) & input_carry);
+        self.register_a = self
+            .register_a
+            .wrapping_add(value)
+            .wrapping_add(self.status & 0b0000_0001);
+        
+        self.update_overflow_flag(self.status & 0b0000_0001 == 0b0000_0001, self.register_a <= value);
 
-        // sets the overflow flag
-        if output_carry {
+        if self.register_a <= value {
             self.status = self.status | 0b0000_0001;
         } else {
             self.status = self.status & 0b1111_1110;
         }
 
-        self.update_overflow_flag(input_carry, output_carry);
+        self.update_zero_and_negative_flags(self.register_a);
+    }
 
-        self.register_a = self
-            .register_a
-            .wrapping_add(value)
-            .wrapping_add(if input_carry { 1 } else { 0 });
-
+    /// AND - Logical AND
+    /// 
+    /// Performs a logical AND with the accumulator register and the value given
+    /// from memory, storing it back into the accumulator register. Sets the zero
+    /// and negative flag as appropriate
+    #[inline]
+    fn and(&mut self, value: u8) {
+        self.register_a = self.register_a & value;
         self.update_zero_and_negative_flags(self.register_a);
     }
 
@@ -140,6 +146,12 @@ impl CPU {
                     self.program_counter += 1;
 
                     self.adc(param)
+                },
+                0x29 => {
+                    let param = program[self.program_counter as usize];
+                    self.program_counter += 1;
+
+                    self.and(param);
                 }
                 0xE8 => self.inx(),
                 0xA9 => {
@@ -162,6 +174,7 @@ impl CPU {
 mod test {
     use super::*;
 
+    // LDA TESTS
     #[test]
     fn test_0xa9_lda_immediate_load_data() {
         let mut cpu = CPU::new();
@@ -178,6 +191,7 @@ mod test {
         assert!(cpu.status & 0b0000_0010 == 0b10);
     }
 
+    // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {
         let mut cpu = CPU::new();
@@ -186,6 +200,7 @@ mod test {
         assert_eq!(cpu.register_x, 0xc1)
     }
 
+    // INX TESTS
     #[test]
     fn test_inx_overflow() {
         let mut cpu = CPU::new();
@@ -195,6 +210,7 @@ mod test {
         assert_eq!(cpu.register_x, 1)
     }
 
+    // == ADC TESTS ==
     #[test]
     fn test_adc_no_carry_out_and_no_overflow() {
         let mut cpu = CPU::new();
@@ -202,8 +218,10 @@ mod test {
         cpu.interpret(vec![0x69, 0x10, 0x00]);
 
         assert_eq!(cpu.register_a, 0x60);
-        assert_eq!(cpu.status & 0b0000_0001, 0);
-        assert_eq!(cpu.status & 0b0100_0000, 0);
+        assert!(cpu.status & 0b0000_0001 == 0);
+        assert!(cpu.status & 0b0100_0000 == 0);
+        assert!(cpu.status & 0b0000_0010 == 0b00);
+        assert!(cpu.status & 0b1000_0000 == 0);
     }
 
     #[test]
@@ -213,8 +231,10 @@ mod test {
         cpu.interpret(vec![0x69, 0x90, 0x00]);
 
         assert_eq!(cpu.register_a, 0x60);
-        assert_eq!(cpu.status & 0b0000_0001, 1);
-        assert_eq!(cpu.status & 0b0100_0000, 0b0100_0000);
+        assert!(cpu.status & 0b0000_0001 == 1);
+        assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
+        assert!(cpu.status & 0b0000_0010 == 0b00);
+        assert!(cpu.status & 0b1000_0000 == 0);
     }
 
     #[test]
@@ -225,8 +245,10 @@ mod test {
         cpu.interpret(vec![0x69, 0xd0, 0x00]);
 
         assert_eq!(cpu.register_a, 0x21);
-        assert_eq!(cpu.status & 0b0000_0001, 1);
-        assert_eq!(cpu.status & 0b0100_0000, 0); // can't overflow if we're adding pos and neg
+        assert!(cpu.status & 0b0000_0001 == 1);
+        assert!(cpu.status & 0b0100_0000 == 0); // can't overflow if we're adding pos and neg
+        assert!(cpu.status & 0b0000_0010 == 0b00);
+        assert!(cpu.status & 0b1000_0000 == 0);
     }
 
     #[test]
@@ -237,35 +259,77 @@ mod test {
         cpu.interpret(vec![0x69, 0x50, 0x00]);
 
         assert_eq!(cpu.register_a, 0xa1);
-        assert_eq!(cpu.status & 0b0000_0001, 0);
-        assert_eq!(cpu.status & 0b0100_0000, 0b0100_0000);
+        assert!(cpu.status & 0b0000_0001 == 0);
+        assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
+        assert!(cpu.status & 0b0000_0010 == 0);
+        assert!(cpu.status & 0b1000_0000 == 0b1000_0000);
     }
 
-    // TODO: Add cases to check if carry out and overflow
-    // flag is set due to the existence of a carry in bit
-    // (i.e. reg_a = 127 + mem_val = 128 + carry_bit = 1)
-
     #[test]
-    fn test_carry_in_sets_carry_out() {
+    fn test_adc_carry_in_sets_carry_out() {
         let mut cpu = CPU::new();
         cpu.register_a = 0x60;
         cpu.status = cpu.status | 0b1; // set carry in
         cpu.interpret(vec![0x69, 0x9f, 0x00]);
 
         assert_eq!(cpu.register_a, 0x0);
-        assert_eq!(cpu.status & 0b0000_0001, 1);
-        assert_eq!(cpu.status & 0b0100_0000, 0);
+        assert!(cpu.status & 0b0000_0001 == 1);
+        assert!(cpu.status & 0b0100_0000 == 0);
+        assert!(cpu.status & 0b0000_0010 == 0b10);
+        assert!(cpu.status & 0b1000_0000 == 0);
     }
 
     #[test]
-    fn test_carry_in_sets_overflow() {
+    fn test_adc_carry_in_sets_carry_out_2() {
+        let mut cpu = CPU::new();
+        cpu.register_a = 0xFF;
+        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.interpret(vec![0x69, 0x00, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x0);
+        assert!(cpu.status & 0b0000_0001 == 1);
+        assert!(cpu.status & 0b0100_0000 == 0);
+        assert!(cpu.status & 0b0000_0010 == 0b10);
+        assert!(cpu.status & 0b1000_0000 == 0);
+    }
+
+    #[test]
+    fn test_adc_carry_in_sets_overflow() {
         let mut cpu = CPU::new();
         cpu.register_a = 0x46;
         cpu.status = cpu.status | 0b1; // set carry in
         cpu.interpret(vec![0x69, 0x39, 0x00]);
 
         assert_eq!(cpu.register_a, 0x80);
-        assert_eq!(cpu.status & 0b0000_0001, 0);
-        assert_eq!(cpu.status & 0b0100_0000, 0b0100_0000);
+        assert!(cpu.status & 0b0000_0001 == 0);
+        assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
+        assert!(cpu.status & 0b0000_0010 == 0b00);
+        assert!(cpu.status & 0b1000_0000 == 0b1000_0000);
     }
+    // ===============
+
+    // == AND TESTS ==
+
+    #[test]
+    fn test_and_non_zero_res() {
+        let mut cpu = CPU::new();
+        cpu.register_a = 0x01;
+        cpu.interpret(vec![0x29, 0x11, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x01);
+        assert!(cpu.status & 0b0000_0010 == 0b00);
+        assert!(cpu.status & 0b1000_0000 == 0b00);
+    }
+
+    #[test]
+    fn test_and_zero_res() {
+        let mut cpu = CPU::new();
+        cpu.register_a = 0x00;
+        cpu.interpret(vec![0x29, 0x1F, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x00);
+        assert!(cpu.status & 0b0000_0010 == 0b10);
+        assert!(cpu.status & 0b1000_0000 == 0b00);
+    }
+    // ===============
 }
