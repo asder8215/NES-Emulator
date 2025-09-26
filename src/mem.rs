@@ -8,7 +8,7 @@ pub(crate) trait Mem {
     fn mem_read(&self, addr: u16) -> u8;
 
     /// Writes 8 bit of data into a specific memory address
-    /// 
+    ///
     /// As a result, if we're writing 16 bits of data, that means
     /// we are going to need two mem_write()s to write this data in    
     fn mem_write(&mut self, addr: u16, data: u8);
@@ -16,7 +16,7 @@ pub(crate) trait Mem {
     /// Because the NES CPU uses little-endian addressing, that means
     /// a 16-bit value is written with the 8 least significant bit first
     /// and then 8 most significant bit after at the provided position.
-    /// 
+    ///
     /// In other words, our MSB comes from pos + 1, LSB comes from pos
     /// and we need to merge these together
     #[inline]
@@ -28,7 +28,7 @@ pub(crate) trait Mem {
 
     /// Writes 16 bit of data into a specific position in memory
     /// using little-endian addressing.
-    /// 
+    ///
     /// What this means is that our data will be split into 8 MSB bits
     /// and 8 LSB bits. Our LSB bits are written first at pos, and then
     /// our MSB bits are written next at pos + 1

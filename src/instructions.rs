@@ -30,8 +30,11 @@ impl CPU {
             .register_a
             .wrapping_add(value)
             .wrapping_add(self.status & 0b0000_0001);
-        
-        self.update_overflow_flag(self.status & 0b0000_0001 == 0b0000_0001, self.register_a <= value);
+
+        self.update_overflow_flag(
+            self.status & 0b0000_0001 == 0b0000_0001,
+            self.register_a <= value,
+        );
 
         if self.register_a <= value {
             self.status = self.status | 0b0000_0001;
@@ -43,7 +46,7 @@ impl CPU {
     }
 
     /// AND - Logical AND
-    /// 
+    ///
     /// Performs a logical AND with the accumulator register and the value given
     /// from memory, storing it back into the accumulator register. Sets the zero
     /// and negative flag as appropriate
@@ -73,7 +76,7 @@ impl CPU {
     pub(crate) fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
-        
+
         self.register_a = value;
         self.update_zero_and_negative_flags(self.register_a);
     }

@@ -1,9 +1,9 @@
 //! Contains the definition of an OpCode and a static compile time
 //! defined HashMap structure with all 56 instructions (and addressing mode
-//! variants) 
+//! variants)
 
-use phf::phf_map;
 use crate::addressing_mode::AddressingMode;
+use phf::phf_map;
 
 #[derive(Debug, Copy, Clone)]
 /// Contains all op code mnemonics
@@ -63,7 +63,7 @@ pub(crate) enum OpCodeName {
     TSX,
     TXA,
     TXS,
-    TYA
+    TYA,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -85,7 +85,13 @@ pub(crate) struct OpCode {
 
 impl OpCode {
     /// Instantiates the OpCode struct on compile time
-    const fn new(code: u8, mnemonic: OpCodeName, len: u8, cycles: u8, mode: AddressingMode) -> Self {
+    const fn new(
+        code: u8,
+        mnemonic: OpCodeName,
+        len: u8,
+        cycles: u8,
+        mode: AddressingMode,
+    ) -> Self {
         Self {
             code,
             mnemonic,

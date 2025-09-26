@@ -1,17 +1,17 @@
 //! Contains the definition CPU and load, run, and reset functionalities
 //! on game inserts
 
-use crate::{mem::Mem, opcodes::{OpCode}};
+use crate::{mem::Mem, opcodes::OpCode};
 
 pub struct CPU {
-    pub register_a: u8,         // accumulator CPU register (temp storage of data for calc)
-    pub register_x: u8,         // another register to store data
-    pub register_y: u8,         // another register to store data
+    pub register_a: u8, // accumulator CPU register (temp storage of data for calc)
+    pub register_x: u8, // another register to store data
+    pub register_y: u8, // another register to store data
     // pub stack_register: u8,     // this is the P register in 6502
-    pub stack_pointer: u8,      // 8 bit addr for the stack pointer
-    pub status: u8,             // processor status register
-    pub program_counter: u16,   // the pc (keeps track of our curr pos in the program)
-    pub(crate) memory: [u8; 0xFFFF]
+    pub stack_pointer: u8,    // 8 bit addr for the stack pointer
+    pub status: u8,           // processor status register
+    pub program_counter: u16, // the pc (keeps track of our curr pos in the program)
+    pub(crate) memory: [u8; 0xFFFF],
 }
 
 impl CPU {
@@ -25,7 +25,7 @@ impl CPU {
             stack_pointer: 0,
             status: 0,
             program_counter: 0,
-            memory: [0; 0xFFFF]
+            memory: [0; 0xFFFF],
         }
     }
 
@@ -45,21 +45,21 @@ impl CPU {
     }
 
     /// Copies the program data into Program ROM (PRG ROM) space of memory.
-    /// 
+    ///
     /// PRG ROM space refers to [0x8000 ... 0xFFFF] region.
-    /// 
-    /// This is where cartridges load their data into the NES's memory. 
-    /// 
-    /// We mark the address 0xFFFC and 0xFFFD with the data 0x8000 because 
+    ///
+    /// This is where cartridges load their data into the NES's memory.
+    ///
+    /// We mark the address 0xFFFC and 0xFFFD with the data 0x8000 because
     /// when a different cartridge is inserted or if there is some sort of retry
-    /// logic within the cartridge, then the PC needs to relearn that it should 
+    /// logic within the cartridge, then the PC needs to relearn that it should
     /// reading from 0x8000 again.
     #[inline]
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x8000 .. (0x8000 + program.len())].copy_from_slice(&program[..]);
+        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
         self.mem_write_u16(0xFFFC, 0x8000);
     }
-    
+
     #[inline]
     pub fn load_and_run(&mut self, program: Vec<u8>) {
         self.load(program);
@@ -112,7 +112,7 @@ impl CPU {
                     crate::opcodes::OpCodeName::LDX => todo!(),
                     crate::opcodes::OpCodeName::LDY => todo!(),
                     crate::opcodes::OpCodeName::LSR => todo!(),
-                    crate::opcodes::OpCodeName::NOP => {}, // does nothing lol
+                    crate::opcodes::OpCodeName::NOP => {} // does nothing lol
                     crate::opcodes::OpCodeName::ORA => todo!(),
                     crate::opcodes::OpCodeName::PHA => todo!(),
                     crate::opcodes::OpCodeName::PHP => todo!(),
@@ -139,7 +139,10 @@ impl CPU {
                 // move PC to the next instruction to process
                 self.program_counter += (opcode_struct.len - 1) as u16;
             } else {
-                panic!("Illegal instruction {} reached at address {:#x}", opcode, self.program_counter)
+                panic!(
+                    "Illegal instruction {} reached at address {:#x}",
+                    opcode, self.program_counter
+                )
             }
         }
     }
@@ -164,11 +167,11 @@ mod test {
     #[test]
     fn test_0xa9_lda_zero_flag() {
         let mut cpu = CPU::new();
-        
+
         cpu.load(vec![0xa9, 0x00, 0x00]);
         cpu.reset();
         cpu.run();
-        
+
         assert!(cpu.status & 0b0000_0010 == 0b10);
     }
 
@@ -178,11 +181,11 @@ mod test {
     #[test]
     fn test_5_ops_working_together() {
         let mut cpu = CPU::new();
-        
+
         cpu.load(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
         cpu.reset();
         cpu.run();
-        
+
         assert_eq!(cpu.register_x, 0xc1)
     }
 
@@ -190,14 +193,14 @@ mod test {
     #[test]
     fn test_inx_overflow() {
         let mut cpu = CPU::new();
-        
+
         cpu.load(vec![0xe8, 0xe8, 0x00]);
         cpu.reset();
 
         cpu.register_x = 0xff;
-        
+
         cpu.run();
-        
+
         assert_eq!(cpu.register_x, 1)
     }
 
@@ -207,14 +210,14 @@ mod test {
     #[test]
     fn test_adc_no_carry_out_and_no_overflow() {
         let mut cpu = CPU::new();
-        
+
         cpu.load(vec![0x69, 0x10, 0x00]);
         cpu.reset();
 
         cpu.register_a = 0x50;
-        
+
         cpu.run();
-        
+
         assert_eq!(cpu.register_a, 0x60);
         assert!(cpu.status & 0b0000_0001 == 0);
         assert!(cpu.status & 0b0100_0000 == 0);
@@ -225,14 +228,14 @@ mod test {
     #[test]
     fn test_adc_carry_out_and_overflow() {
         let mut cpu = CPU::new();
-        
+
         cpu.load(vec![0x69, 0x90, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0xd0;
-        
+
         cpu.run();
-        
+
         assert_eq!(cpu.register_a, 0x60);
         assert!(cpu.status & 0b0000_0001 == 1);
         assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
@@ -246,12 +249,12 @@ mod test {
 
         cpu.load(vec![0x69, 0xd0, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0x50;
         cpu.status = cpu.status | 0b1; // set carry in
-        
+
         cpu.run();
-        
+
         assert_eq!(cpu.register_a, 0x21);
         assert!(cpu.status & 0b0000_0001 == 1);
         assert!(cpu.status & 0b0100_0000 == 0); // can't overflow if we're adding pos and neg
@@ -270,7 +273,7 @@ mod test {
         cpu.status = cpu.status | 0b1; // set carry in
 
         cpu.run();
-        
+
         assert_eq!(cpu.register_a, 0xa1);
         assert!(cpu.status & 0b0000_0001 == 0);
         assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
@@ -284,7 +287,7 @@ mod test {
 
         cpu.load(vec![0x69, 0x9f, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0x60;
         cpu.status = cpu.status | 0b1; // set carry in
 
@@ -303,12 +306,12 @@ mod test {
 
         cpu.load(vec![0x69, 0x00, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0xFF;
         cpu.status = cpu.status | 0b1; // set carry in
 
         cpu.run();
-        
+
         assert_eq!(cpu.register_a, 0x0);
         assert!(cpu.status & 0b0000_0001 == 1);
         assert!(cpu.status & 0b0100_0000 == 0);
@@ -319,13 +322,13 @@ mod test {
     #[test]
     fn test_adc_carry_in_sets_overflow() {
         let mut cpu = CPU::new();
-        
+
         cpu.load(vec![0x69, 0x39, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0x46;
         cpu.status = cpu.status | 0b1; // set carry in
-        
+
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x80);
@@ -344,7 +347,7 @@ mod test {
 
         cpu.load(vec![0x29, 0x11, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0x01;
 
         cpu.run();
@@ -360,7 +363,7 @@ mod test {
 
         cpu.load(vec![0x29, 0x1F, 0x00]);
         cpu.reset();
-        
+
         cpu.register_a = 0x00;
 
         cpu.run();
