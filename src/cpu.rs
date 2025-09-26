@@ -1,9 +1,17 @@
+//! Contains the definition CPU and load, run, and reset functionalities
+//! on game inserts
+
+use crate::{mem::Mem, opcodes::{OpCode}};
+
 pub struct CPU {
-    pub register_a: u8, // accumulator CPU register (temp storage of data for calc)
-    pub register_x: u8, // another register to store data
-    pub register_y: u8, // another register to store data
-    pub status: u8,     // processor status register
-    pub program_counter: u16, // the pc (keeps track of our curr pos in the program)
+    pub register_a: u8,         // accumulator CPU register (temp storage of data for calc)
+    pub register_x: u8,         // another register to store data
+    pub register_y: u8,         // another register to store data
+    // pub stack_register: u8,     // this is the P register in 6502
+    pub stack_pointer: u8,      // 8 bit addr for the stack pointer
+    pub status: u8,             // processor status register
+    pub program_counter: u16,   // the pc (keeps track of our curr pos in the program)
+    pub(crate) memory: [u8; 0xFFFF]
 }
 
 impl CPU {
@@ -13,116 +21,50 @@ impl CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
+            // stack_register: 0,
+            stack_pointer: 0,
             status: 0,
             program_counter: 0,
+            memory: [0; 0xFFFF]
         }
     }
 
-    /// ADC - Add with Carry
-    ///
-    /// Increments the accumulator register with the content of a memory location
-    /// in combination with the carry bit. If unsigned overflow occurs, then carry bit
-    /// is set. If signed overflow occurs, then the overflow flag is set.
-    ///
-    /// Ex:
-    ///
-    /// 0x50 + 0x50 = 0xa0 | 80 + 80 = 160 | 80 + 80 = -96 <-- pos + pos = negative from
-    /// signed overflow
-    ///
-    /// 0xd0 + 0x90 = 0x60 | 208 + 144 = 352 (- 256) = 96 | -48 + -112 <-- neg + neg = pos
-    /// from signed overflow (plus sets the carry bit)
-    ///
-    /// The overflow flag can be set accordingly based on what (input carry ^ output carry)
-    /// results to
+    /// This is the NES mechanism to mark where the CPU should start execution.
+    /// When a new cartridge is inserted, the CPU receives a reset interrupt signal
+    /// to instruct to CPU on the following:
+    /// * reset all states (registers and status)
+    /// * set the PC to the 16-bit address that is stored at 0xFFFC
     #[inline]
-    fn adc(&mut self, value: u8) {
-        self.register_a = self
-            .register_a
-            .wrapping_add(value)
-            .wrapping_add(self.status & 0b0000_0001);
-        
-        self.update_overflow_flag(self.status & 0b0000_0001 == 0b0000_0001, self.register_a <= value);
+    pub fn reset(&mut self) {
+        self.register_a = 0;
+        self.register_x = 0;
+        self.register_y = 0;
+        self.status = 0;
 
-        if self.register_a <= value {
-            self.status = self.status | 0b0000_0001;
-        } else {
-            self.status = self.status & 0b1111_1110;
-        }
-
-        self.update_zero_and_negative_flags(self.register_a);
+        self.program_counter = self.mem_read_u16(0xFFFC);
     }
 
-    /// AND - Logical AND
+    /// Copies the program data into Program ROM (PRG ROM) space of memory.
     /// 
-    /// Performs a logical AND with the accumulator register and the value given
-    /// from memory, storing it back into the accumulator register. Sets the zero
-    /// and negative flag as appropriate
+    /// PRG ROM space refers to [0x8000 ... 0xFFFF] region.
+    /// 
+    /// This is where cartridges load their data into the NES's memory. 
+    /// 
+    /// We mark the address 0xFFFC and 0xFFFD with the data 0x8000 because 
+    /// when a different cartridge is inserted or if there is some sort of retry
+    /// logic within the cartridge, then the PC needs to relearn that it should 
+    /// reading from 0x8000 again.
     #[inline]
-    fn and(&mut self, value: u8) {
-        self.register_a = self.register_a & value;
-        self.update_zero_and_negative_flags(self.register_a);
+    pub fn load(&mut self, program: Vec<u8>) {
+        self.memory[0x8000 .. (0x8000 + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_u16(0xFFFC, 0x8000);
     }
-
-    /// INX - Increment X Register
-    ///
-    /// Increments the X register by 1 (wraps around on overflow) and sets
-    /// the zero and negative flag as appropriate
+    
     #[inline]
-    fn inx(&mut self) {
-        self.register_x = self.register_x.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.register_x);
-    }
-
-    /// LDA - Load Accumulator
-    ///
-    /// Takes in an accumulator value and sets the zero and negative
-    /// flag as appropriate
-    #[inline]
-    fn lda(&mut self, value: u8) {
-        self.register_a = value;
-        self.update_zero_and_negative_flags(self.register_a);
-    }
-
-    /// TAX - Transfer of Accumulator to X
-    ///
-    /// Copies the content of the accumulator register into the X register
-    /// and sets the zero and negative flag as appropriate
-    #[inline]
-    fn tax(&mut self) {
-        self.register_x = self.register_a;
-        self.update_zero_and_negative_flags(self.register_x);
-    }
-
-    /// Sets the zero and negative flag accordingly based on the result
-    /// (coming from a register)
-    ///
-    /// https://www.nesdev.org/obelisk-6502-guide/reference.html
-    ///
-    /// https://www.nesdev.org/wiki/Status_flags
-    #[inline]
-    fn update_zero_and_negative_flags(&mut self, result: u8) {
-        if result == 0 {
-            self.status = self.status | 0b0000_0010; // preserve prior status; set ZF to 1
-        } else {
-            self.status = self.status & 0b1111_1101; // preserve prior status; reset ZF to 0
-        }
-
-        if result & 0b1000_0000 == 0b1000_0000 {
-            self.status = self.status | 0b1000_0000; // preserve prior status; set NF to 1
-        } else {
-            self.status = self.status & 0b0111_1111; // preserve prior status; reset NF to 0
-        }
-    }
-
-    /// Sets the overflow flag accordingly in the status by doing a logical
-    /// XOR on the input and output carry
-    #[inline]
-    fn update_overflow_flag(&mut self, input_carry: bool, output_carry: bool) {
-        if input_carry != output_carry {
-            self.status = self.status | 0b0100_0000;
-        } else {
-            self.status = self.status & 0b1011_1111;
-        }
+    pub fn load_and_run(&mut self, program: Vec<u8>) {
+        self.load(program);
+        self.reset();
+        self.run();
     }
 
     /// Runs in an infinite loop (until BRK) to do the following:
@@ -130,41 +72,74 @@ impl CPU {
     /// - Decode instruction
     /// - Exec instruction
     /// - Rinse and repeat
-    pub fn interpret(&mut self, program: Vec<u8>) {
-        // reset pc to 0 every time we call interpret on CPU
-        self.program_counter = 0;
-
+    pub fn run(&mut self) {
         loop {
-            let opscode = program[self.program_counter as usize];
+            let opcode = self.mem_read(self.program_counter);
             self.program_counter += 1;
 
-            // all opsmode match to an instruction within the instruction
-            // set described here: https://www.nesdev.org/obelisk-6502-guide/reference.html#
-            match opscode {
-                0x69 => {
-                    let param = program[self.program_counter as usize];
-                    self.program_counter += 1;
-
-                    self.adc(param)
-                },
-                0x29 => {
-                    let param = program[self.program_counter as usize];
-                    self.program_counter += 1;
-
-                    self.and(param);
+            if let Some(opcode_struct) = OpCode::get(opcode) {
+                match opcode_struct.mnemonic {
+                    crate::opcodes::OpCodeName::ADC => self.adc(&opcode_struct.mode),
+                    crate::opcodes::OpCodeName::AND => self.and(&opcode_struct.mode),
+                    crate::opcodes::OpCodeName::ASL => todo!(),
+                    crate::opcodes::OpCodeName::BCC => todo!(),
+                    crate::opcodes::OpCodeName::BCS => todo!(),
+                    crate::opcodes::OpCodeName::BEQ => todo!(),
+                    crate::opcodes::OpCodeName::BIT => todo!(),
+                    crate::opcodes::OpCodeName::BMI => todo!(),
+                    crate::opcodes::OpCodeName::BNE => todo!(),
+                    crate::opcodes::OpCodeName::BPL => todo!(),
+                    crate::opcodes::OpCodeName::BRK => return,
+                    crate::opcodes::OpCodeName::BVC => todo!(),
+                    crate::opcodes::OpCodeName::BVS => todo!(),
+                    crate::opcodes::OpCodeName::CLC => todo!(),
+                    crate::opcodes::OpCodeName::CLD => todo!(),
+                    crate::opcodes::OpCodeName::CLI => todo!(),
+                    crate::opcodes::OpCodeName::CLV => todo!(),
+                    crate::opcodes::OpCodeName::CMP => todo!(),
+                    crate::opcodes::OpCodeName::CPX => todo!(),
+                    crate::opcodes::OpCodeName::CPY => todo!(),
+                    crate::opcodes::OpCodeName::DEC => todo!(),
+                    crate::opcodes::OpCodeName::DEX => todo!(),
+                    crate::opcodes::OpCodeName::DEY => todo!(),
+                    crate::opcodes::OpCodeName::EOR => todo!(),
+                    crate::opcodes::OpCodeName::INC => todo!(),
+                    crate::opcodes::OpCodeName::INX => self.inx(),
+                    crate::opcodes::OpCodeName::INY => todo!(),
+                    crate::opcodes::OpCodeName::JMP => todo!(),
+                    crate::opcodes::OpCodeName::JSR => todo!(),
+                    crate::opcodes::OpCodeName::LDA => self.lda(&opcode_struct.mode),
+                    crate::opcodes::OpCodeName::LDX => todo!(),
+                    crate::opcodes::OpCodeName::LDY => todo!(),
+                    crate::opcodes::OpCodeName::LSR => todo!(),
+                    crate::opcodes::OpCodeName::NOP => {}, // does nothing lol
+                    crate::opcodes::OpCodeName::ORA => todo!(),
+                    crate::opcodes::OpCodeName::PHA => todo!(),
+                    crate::opcodes::OpCodeName::PHP => todo!(),
+                    crate::opcodes::OpCodeName::PLA => todo!(),
+                    crate::opcodes::OpCodeName::PLP => todo!(),
+                    crate::opcodes::OpCodeName::ROL => todo!(),
+                    crate::opcodes::OpCodeName::ROR => todo!(),
+                    crate::opcodes::OpCodeName::RTI => todo!(),
+                    crate::opcodes::OpCodeName::RTS => todo!(),
+                    crate::opcodes::OpCodeName::SBC => todo!(),
+                    crate::opcodes::OpCodeName::SEC => todo!(),
+                    crate::opcodes::OpCodeName::SED => todo!(),
+                    crate::opcodes::OpCodeName::SEI => todo!(),
+                    crate::opcodes::OpCodeName::STA => todo!(),
+                    crate::opcodes::OpCodeName::STX => todo!(),
+                    crate::opcodes::OpCodeName::STY => todo!(),
+                    crate::opcodes::OpCodeName::TAX => self.tax(),
+                    crate::opcodes::OpCodeName::TAY => todo!(),
+                    crate::opcodes::OpCodeName::TSX => todo!(),
+                    crate::opcodes::OpCodeName::TXA => todo!(),
+                    crate::opcodes::OpCodeName::TXS => todo!(),
+                    crate::opcodes::OpCodeName::TYA => todo!(),
                 }
-                0xE8 => self.inx(),
-                0xA9 => {
-                    // For LDA (0xA9), it loads a byte of memory into the accumulator
-                    // register (the param retrieves the byte of memory from program)
-                    let param = program[self.program_counter as usize];
-                    self.program_counter += 1;
-
-                    self.lda(param);
-                }
-                0xAA => self.tax(),
-                0x00 => return, // BRK instruction
-                _ => todo!(),   // any other opscode that reaches here is essentially a no-op
+                // move PC to the next instruction to process
+                self.program_counter += (opcode_struct.len - 1) as u16;
+            } else {
+                panic!("Illegal instruction {} reached at address {:#x}", opcode, self.program_counter)
             }
         }
     }
@@ -178,7 +153,9 @@ mod test {
     #[test]
     fn test_0xa9_lda_immediate_load_data() {
         let mut cpu = CPU::new();
-        cpu.interpret(vec![0xa9, 0x05, 0x00]);
+        cpu.load(vec![0xa9, 0x05, 0x00]);
+        cpu.reset();
+        cpu.run();
         assert_eq!(cpu.register_a, 0x05);
         assert!(cpu.status & 0b0000_0010 == 0b00);
         assert!(cpu.status & 0b1000_0000 == 0);
@@ -187,16 +164,25 @@ mod test {
     #[test]
     fn test_0xa9_lda_zero_flag() {
         let mut cpu = CPU::new();
-        cpu.interpret(vec![0xa9, 0x00, 0x00]);
+        
+        cpu.load(vec![0xa9, 0x00, 0x00]);
+        cpu.reset();
+        cpu.run();
+        
         assert!(cpu.status & 0b0000_0010 == 0b10);
     }
+
+    // ===============
 
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {
         let mut cpu = CPU::new();
-        cpu.interpret(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
-
+        
+        cpu.load(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
+        cpu.reset();
+        cpu.run();
+        
         assert_eq!(cpu.register_x, 0xc1)
     }
 
@@ -204,19 +190,31 @@ mod test {
     #[test]
     fn test_inx_overflow() {
         let mut cpu = CPU::new();
-        cpu.register_x = 0xff;
-        cpu.interpret(vec![0xe8, 0xe8, 0x00]);
+        
+        cpu.load(vec![0xe8, 0xe8, 0x00]);
+        cpu.reset();
 
+        cpu.register_x = 0xff;
+        
+        cpu.run();
+        
         assert_eq!(cpu.register_x, 1)
     }
+
+    // ===============
 
     // == ADC TESTS ==
     #[test]
     fn test_adc_no_carry_out_and_no_overflow() {
         let mut cpu = CPU::new();
-        cpu.register_a = 0x50;
-        cpu.interpret(vec![0x69, 0x10, 0x00]);
+        
+        cpu.load(vec![0x69, 0x10, 0x00]);
+        cpu.reset();
 
+        cpu.register_a = 0x50;
+        
+        cpu.run();
+        
         assert_eq!(cpu.register_a, 0x60);
         assert!(cpu.status & 0b0000_0001 == 0);
         assert!(cpu.status & 0b0100_0000 == 0);
@@ -227,9 +225,14 @@ mod test {
     #[test]
     fn test_adc_carry_out_and_overflow() {
         let mut cpu = CPU::new();
+        
+        cpu.load(vec![0x69, 0x90, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0xd0;
-        cpu.interpret(vec![0x69, 0x90, 0x00]);
-
+        
+        cpu.run();
+        
         assert_eq!(cpu.register_a, 0x60);
         assert!(cpu.status & 0b0000_0001 == 1);
         assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
@@ -240,10 +243,15 @@ mod test {
     #[test]
     fn test_adc_carry_out_and_no_overflow() {
         let mut cpu = CPU::new();
+
+        cpu.load(vec![0x69, 0xd0, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0x50;
         cpu.status = cpu.status | 0b1; // set carry in
-        cpu.interpret(vec![0x69, 0xd0, 0x00]);
-
+        
+        cpu.run();
+        
         assert_eq!(cpu.register_a, 0x21);
         assert!(cpu.status & 0b0000_0001 == 1);
         assert!(cpu.status & 0b0100_0000 == 0); // can't overflow if we're adding pos and neg
@@ -254,10 +262,15 @@ mod test {
     #[test]
     fn test_adc_no_carry_out_and_overflow() {
         let mut cpu = CPU::new();
+
+        cpu.load(vec![0x69, 0x50, 0x00]);
+        cpu.reset();
+
         cpu.register_a = 0x50;
         cpu.status = cpu.status | 0b1; // set carry in
-        cpu.interpret(vec![0x69, 0x50, 0x00]);
 
+        cpu.run();
+        
         assert_eq!(cpu.register_a, 0xa1);
         assert!(cpu.status & 0b0000_0001 == 0);
         assert!(cpu.status & 0b0100_0000 == 0b0100_0000);
@@ -268,9 +281,14 @@ mod test {
     #[test]
     fn test_adc_carry_in_sets_carry_out() {
         let mut cpu = CPU::new();
+
+        cpu.load(vec![0x69, 0x9f, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0x60;
         cpu.status = cpu.status | 0b1; // set carry in
-        cpu.interpret(vec![0x69, 0x9f, 0x00]);
+
+        cpu.run();
 
         assert_eq!(cpu.register_a, 0x0);
         assert!(cpu.status & 0b0000_0001 == 1);
@@ -282,10 +300,15 @@ mod test {
     #[test]
     fn test_adc_carry_in_sets_carry_out_2() {
         let mut cpu = CPU::new();
+
+        cpu.load(vec![0x69, 0x00, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0xFF;
         cpu.status = cpu.status | 0b1; // set carry in
-        cpu.interpret(vec![0x69, 0x00, 0x00]);
 
+        cpu.run();
+        
         assert_eq!(cpu.register_a, 0x0);
         assert!(cpu.status & 0b0000_0001 == 1);
         assert!(cpu.status & 0b0100_0000 == 0);
@@ -296,9 +319,14 @@ mod test {
     #[test]
     fn test_adc_carry_in_sets_overflow() {
         let mut cpu = CPU::new();
+        
+        cpu.load(vec![0x69, 0x39, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0x46;
         cpu.status = cpu.status | 0b1; // set carry in
-        cpu.interpret(vec![0x69, 0x39, 0x00]);
+        
+        cpu.run();
 
         assert_eq!(cpu.register_a, 0x80);
         assert!(cpu.status & 0b0000_0001 == 0);
@@ -313,8 +341,13 @@ mod test {
     #[test]
     fn test_and_non_zero_res() {
         let mut cpu = CPU::new();
+
+        cpu.load(vec![0x29, 0x11, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0x01;
-        cpu.interpret(vec![0x29, 0x11, 0x00]);
+
+        cpu.run();
 
         assert_eq!(cpu.register_a, 0x01);
         assert!(cpu.status & 0b0000_0010 == 0b00);
@@ -324,8 +357,13 @@ mod test {
     #[test]
     fn test_and_zero_res() {
         let mut cpu = CPU::new();
+
+        cpu.load(vec![0x29, 0x1F, 0x00]);
+        cpu.reset();
+        
         cpu.register_a = 0x00;
-        cpu.interpret(vec![0x29, 0x1F, 0x00]);
+
+        cpu.run();
 
         assert_eq!(cpu.register_a, 0x00);
         assert!(cpu.status & 0b0000_0010 == 0b10);
