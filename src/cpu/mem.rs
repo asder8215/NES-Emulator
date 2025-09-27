@@ -1,9 +1,9 @@
 //! Contains all memory related operation implementations for the CPU
 //! like mem_read and mem_write
 
-use crate::cpu::CPU;
+use super::CPU;
 
-pub(crate) trait Mem {
+pub trait Mem {
     /// Returns the value stored at provided memory address
     fn mem_read(&self, addr: u16) -> u8;
 

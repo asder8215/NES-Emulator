@@ -2,7 +2,7 @@
 //! defined HashMap structure with all 56 instructions (and addressing mode
 //! variants)
 
-use crate::addressing_mode::AddressingMode;
+use crate::cpu::addressing_mode::AddressingMode;
 use phf::phf_map;
 
 #[derive(Debug, Copy, Clone)]

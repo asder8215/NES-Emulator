@@ -2,7 +2,7 @@
 //! These instruction are implemented in accordance with:
 //! https://www.nesdev.org/obelisk-6502-guide/reference.html#
 
-use crate::{addressing_mode::AddressingMode, cpu::CPU, mem::Mem};
+use super::{CPU, addressing_mode::AddressingMode, mem::Mem};
 
 impl CPU {
     /// ADC - Add with Carry
@@ -35,13 +35,7 @@ impl CPU {
             self.status & 0b0000_0001 == 0b0000_0001,
             self.register_a <= value,
         );
-
-        if self.register_a <= value {
-            self.status = self.status | 0b0000_0001;
-        } else {
-            self.status = self.status & 0b1111_1110;
-        }
-
+        self.update_carry_flag_from_add(self.register_a, value);
         self.update_zero_and_negative_flags(self.register_a);
     }
 
@@ -56,6 +50,30 @@ impl CPU {
         let value = self.mem_read(addr);
         self.register_a = self.register_a & value;
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    /// ASL - Arithmetic Shift Left
+    ///
+    /// Shifts all bits of the accumulator register to the left by one. Bit 0 is
+    /// set to 0 as a result and bit 7 is placed in the carry flag of the processor
+    /// status register. In effect, ASL multiplies the content of the accumulator
+    /// register by 2. Sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn asl(&mut self, mode: &AddressingMode) {
+        let old_value: u8;
+        if matches!(mode, AddressingMode::Accumulator) {
+            old_value = self.register_a;
+            self.register_a <<= 1;
+            self.update_zero_and_negative_flags(self.register_a);
+        } else {
+            let addr = self.get_operand_address(mode);
+            old_value = self.mem_read(addr);
+            let new_val = old_value << 1;
+            self.mem_write(addr, new_val);
+            self.update_zero_and_negative_flags(new_val);
+        }
+
+        self.update_carry_flag_from_mult(old_value);
     }
 
     /// INX - Increment X Register
@@ -109,6 +127,28 @@ impl CPU {
             self.status = self.status | 0b1000_0000; // preserve prior status; set NF to 1
         } else {
             self.status = self.status & 0b0111_1111; // preserve prior status; reset NF to 0
+        }
+    }
+
+    /// Updates the carry flag to true with if old bit 7 of the value
+    /// is set; otherwise false
+    #[inline]
+    fn update_carry_flag_from_mult(&mut self, value: u8) {
+        if value & 0b1000_0000 == 0b1000_0000 {
+            self.status |= 0b0000_0001;
+        } else {
+            self.status &= 0b1111_1110;
+        }
+    }
+
+    /// Updates the carry flag to true if register <= value; otherwise
+    /// false
+    #[inline]
+    fn update_carry_flag_from_add(&mut self, register: u8, value: u8) {
+        if register <= value {
+            self.status = self.status | 0b0000_0001;
+        } else {
+            self.status = self.status & 0b1111_1110;
         }
     }
 
