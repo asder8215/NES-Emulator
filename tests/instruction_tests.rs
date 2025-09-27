@@ -111,7 +111,7 @@ mod test {
         cpu.reset();
 
         cpu.register_a = 0x50;
-        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.status |= 0b1; // set carry in
 
         cpu.run();
 
@@ -130,7 +130,7 @@ mod test {
         cpu.reset();
 
         cpu.register_a = 0x50;
-        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.status |= 0b1; // set carry in
 
         cpu.run();
 
@@ -149,7 +149,7 @@ mod test {
         cpu.reset();
 
         cpu.register_a = 0x60;
-        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.status |= 0b1; // set carry in
 
         cpu.run();
 
@@ -168,7 +168,7 @@ mod test {
         cpu.reset();
 
         cpu.register_a = 0xFF;
-        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.status |= 0b1; // set carry in
 
         cpu.run();
 
@@ -187,7 +187,7 @@ mod test {
         cpu.reset();
 
         cpu.register_a = 0x46;
-        cpu.status = cpu.status | 0b1; // set carry in
+        cpu.status |= 0b1; // set carry in
 
         cpu.run();
 

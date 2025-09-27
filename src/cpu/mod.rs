@@ -33,6 +33,12 @@ pub struct CPU {
 // ||+------- (No CPU effect; always pushed as 1)
 // |+-------- Overflow
 // +--------- Negative
+impl Default for CPU {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CPU {
     /// Instantiates the CPU (all set to 0)
     pub fn new() -> Self {
@@ -74,7 +80,7 @@ impl CPU {
     /// reading from 0x8000 again.
     #[inline]
     pub fn load(&mut self, program: &[u8]) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
+        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(program);
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 

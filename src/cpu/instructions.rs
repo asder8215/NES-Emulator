@@ -48,7 +48,7 @@ impl CPU {
     pub(crate) fn and(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
-        self.register_a = self.register_a & value;
+        self.register_a &= value;
         self.update_zero_and_negative_flags(self.register_a);
     }
 
@@ -118,15 +118,15 @@ impl CPU {
     #[inline]
     fn update_zero_and_negative_flags(&mut self, result: u8) {
         if result == 0 {
-            self.status = self.status | 0b0000_0010; // preserve prior status; set ZF to 1
+            self.status |= 0b0000_0010; // preserve prior status; set ZF to 1
         } else {
-            self.status = self.status & 0b1111_1101; // preserve prior status; reset ZF to 0
+            self.status &= 0b1111_1101; // preserve prior status; reset ZF to 0
         }
 
         if result & 0b1000_0000 == 0b1000_0000 {
-            self.status = self.status | 0b1000_0000; // preserve prior status; set NF to 1
+            self.status |= 0b1000_0000; // preserve prior status; set NF to 1
         } else {
-            self.status = self.status & 0b0111_1111; // preserve prior status; reset NF to 0
+            self.status &= 0b0111_1111; // preserve prior status; reset NF to 0
         }
     }
 
@@ -146,9 +146,9 @@ impl CPU {
     #[inline]
     fn update_carry_flag_from_add(&mut self, register: u8, value: u8) {
         if register <= value {
-            self.status = self.status | 0b0000_0001;
+            self.status |= 0b0000_0001;
         } else {
-            self.status = self.status & 0b1111_1110;
+            self.status &= 0b1111_1110;
         }
     }
 
@@ -157,9 +157,9 @@ impl CPU {
     #[inline]
     fn update_overflow_flag(&mut self, input_carry: bool, output_carry: bool) {
         if input_carry != output_carry {
-            self.status = self.status | 0b0100_0000;
+            self.status |= 0b0100_0000;
         } else {
-            self.status = self.status & 0b1011_1111;
+            self.status &= 0b1011_1111;
         }
     }
 }

@@ -44,60 +44,47 @@ impl CPU {
             AddressingMode::ZeroPage => self.mem_read(self.program_counter) as u16,
             AddressingMode::ZeroPageX => {
                 let pos = self.mem_read(self.program_counter);
-                let addr = pos.wrapping_add(self.register_x) as u16;
-                addr
+                pos.wrapping_add(self.register_x) as u16
             }
             AddressingMode::ZeroPageY => {
                 let pos = self.mem_read(self.program_counter);
-                let addr = pos.wrapping_add(self.register_y) as u16;
-                addr
+                pos.wrapping_add(self.register_y) as u16
             }
             AddressingMode::Relative => {
                 let addr = self.mem_read(self.program_counter) as u16;
                 // Is overflow something that a branch instruction do?
-                let addr = self.program_counter.wrapping_add(addr);
-                addr
+                self.program_counter.wrapping_add(addr)
             }
             AddressingMode::Absolute => self.mem_read_u16(self.program_counter),
             AddressingMode::AbsoluteX => {
                 let pos = self.mem_read(self.program_counter) as u16;
-                let addr = pos.wrapping_add(self.register_x as u16);
-                addr
+                pos.wrapping_add(self.register_x as u16)
             }
             AddressingMode::AbsoluteY => {
                 let pos = self.mem_read(self.program_counter) as u16;
-                let addr = pos.wrapping_add(self.register_y as u16);
-                addr
+                pos.wrapping_add(self.register_y as u16)
             }
             AddressingMode::Indirect => {
                 // we have a 16 bit ptr in memory
                 let ptr = self.mem_read_u16(self.program_counter);
-
                 // we have to point to the actual 16 bit target location
-                let addr = self.mem_read_u16(ptr);
-
-                addr
+                self.mem_read_u16(ptr)
             }
             AddressingMode::IndirectX => {
                 // contains an 8 bit addr in memory
                 let base = self.mem_read(self.program_counter);
-
                 // the target addr is located with base + register x
                 // (points to the LSB byte of the addr)
                 let ptr = base.wrapping_add(self.register_x);
-
-                let addr = self.mem_read_u16(ptr as u16);
-                addr
+                self.mem_read_u16(ptr as u16)
             }
             AddressingMode::IndirectY => {
                 // contains an 8 bit address that points to a 16 bit address in memory
                 let base = self.mem_read(self.program_counter);
-
                 // grab the 16 bit addr
                 let pos = self.mem_read_u16(base as u16);
                 // add with register y to fetch the target address
-                let addr = pos.wrapping_add(self.register_y as u16);
-                addr
+                pos.wrapping_add(self.register_y as u16)
             }
         }
     }
