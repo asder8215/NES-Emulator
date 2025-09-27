@@ -7,6 +7,7 @@ use phf::phf_map;
 
 #[derive(Debug, Copy, Clone)]
 /// Contains all op code mnemonics
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) enum OpCodeName {
     ADC,
     AND,
