@@ -20,6 +20,13 @@
 
 use super::CPU;
 
+pub(crate) const CARRY_BIT: u8 = 0b0000_0001;
+pub(crate) const ZERO_BIT: u8 = 0b0000_0010;
+pub(crate) const INTERRUPT_DISABLE_BIT: u8 = 0b0000_0100;
+pub(crate) const DECIMAL_BIT: u8 = 0b0000_1000;
+pub(crate) const OVERFLOW_BIT: u8 = 0b0100_0000;
+pub(crate) const NEGATIVE_BIT: u8 = 0b1000_0000;
+
 /// This is an enum used for testing check if a certain processor
 /// status was set or not
 ///
@@ -45,14 +52,15 @@ impl CPU {
     /// Checks if a specific processor status flag is set
     pub fn is_status_flag_set(&self, flag: &ProcessorStatus) -> bool {
         match flag {
-            ProcessorStatus::Carry => self.status & 0b0000_0001 == 1,
-            ProcessorStatus::Zero => self.status & 0b0000_0010 == 0b10,
-            ProcessorStatus::InterruptDisable => self.status & 0b0000_0100 == 0b100,
-            ProcessorStatus::Decimal => self.status & 0b0000_1000 == 0b1000,
+            ProcessorStatus::Carry => self.status & CARRY_BIT == 1,
+            ProcessorStatus::Zero => self.status & ZERO_BIT == 0b10,
+            ProcessorStatus::InterruptDisable => self.status & INTERRUPT_DISABLE_BIT == 0b100,
+            // the NES doesn't actually use decimal mode so this gets unused
+            ProcessorStatus::Decimal => self.status & DECIMAL_BIT == 0b1000,
             ProcessorStatus::BFlag => unreachable!(),
             ProcessorStatus::Unused => unreachable!(),
-            ProcessorStatus::Overflow => self.status & 0b0100_0000 == 0b100_0000,
-            ProcessorStatus::Negative => self.status & 0b1000_0000 == 0b1000_0000,
+            ProcessorStatus::Overflow => self.status & OVERFLOW_BIT == 0b100_0000,
+            ProcessorStatus::Negative => self.status & NEGATIVE_BIT == 0b1000_0000,
         }
     }
 

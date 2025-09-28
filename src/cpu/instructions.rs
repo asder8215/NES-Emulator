@@ -2,7 +2,7 @@
 //! These instruction are implemented in accordance with:
 //! https://www.nesdev.org/obelisk-6502-guide/reference.html#
 
-use crate::cpu::processor_status::ProcessorStatus;
+use crate::cpu::processor_status::{CARRY_BIT, NEGATIVE_BIT, OVERFLOW_BIT, ProcessorStatus};
 
 use super::{CPU, addressing_mode::AddressingMode, mem::Mem};
 
@@ -31,14 +31,14 @@ impl CPU {
         self.register_a = self
             .register_a
             .wrapping_add(value)
-            .wrapping_add(self.status & 0b0000_0001);
+            .wrapping_add(self.status & CARRY_BIT);
 
         self.update_overflow_flag(
-            (self.status & 0b0000_0001 == 0b0000_0001) != (self.register_a <= value),
+            (self.status & CARRY_BIT == CARRY_BIT) != (self.register_a <= value),
         );
         self.update_carry_flag(self.register_a <= value);
         self.update_zero_flag(self.register_a == 0);
-        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// AND - Logical AND
@@ -52,7 +52,7 @@ impl CPU {
         let value = self.mem_read(addr);
         self.register_a &= value;
         self.update_zero_flag(self.register_a == 0);
-        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// ASL - Arithmetic Shift Left
@@ -68,17 +68,17 @@ impl CPU {
             old_value = self.register_a;
             self.register_a <<= 1;
             self.update_zero_flag(self.register_a == 0);
-            self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
+            self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
         } else {
             let addr = self.get_operand_address(mode);
             old_value = self.mem_read(addr);
             let new_val = old_value << 1;
             self.mem_write(addr, new_val);
             self.update_zero_flag(new_val == 0);
-            self.update_negative_flag(new_val & 0b1000_0000 == 0b1000_0000);
+            self.update_negative_flag(new_val & NEGATIVE_BIT == NEGATIVE_BIT);
         }
 
-        self.update_carry_flag(old_value & 0b1000_0000 == 0b1000_0000);
+        self.update_carry_flag(old_value & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// Handles all branching instructions:
@@ -112,8 +112,8 @@ impl CPU {
         let value = self.mem_read(addr);
 
         self.update_zero_flag(self.register_a & value == 0);
-        self.update_overflow_flag(value & 0b0100_0000 == 0b0100_0000);
-        self.update_negative_flag(value & 0b1000_0000 == 0b1000_0000);
+        self.update_overflow_flag(value & OVERFLOW_BIT == OVERFLOW_BIT);
+        self.update_negative_flag(value & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// Handles all clear flag instructions:
@@ -149,7 +149,7 @@ impl CPU {
         let result = self.register_a.wrapping_sub(value);
         self.update_carry_flag(self.register_a >= value);
         self.update_zero_flag(result == 0);
-        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(result & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// CPX - Compare X Register
@@ -164,7 +164,7 @@ impl CPU {
         let result = self.register_x.wrapping_sub(value);
         self.update_carry_flag(self.register_x >= value);
         self.update_zero_flag(result == 0);
-        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(result & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// CPY - Compare Y Register
@@ -179,7 +179,7 @@ impl CPU {
         let result = self.register_y.wrapping_sub(value);
         self.update_carry_flag(self.register_y >= value);
         self.update_zero_flag(result == 0);
-        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(result & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// DEC - Decrement Memory
@@ -195,7 +195,7 @@ impl CPU {
 
         self.mem_write(addr, result);
         self.update_zero_flag(result == 0);
-        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(result & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// DEX - Decrement X Register
@@ -206,7 +206,7 @@ impl CPU {
     pub(crate) fn dex(&mut self) {
         self.register_x = self.register_x.wrapping_sub(1);
         self.update_zero_flag(self.register_x == 0);
-        self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_x & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// DEY - Decrement Y Register
@@ -217,7 +217,7 @@ impl CPU {
     pub(crate) fn dey(&mut self) {
         self.register_y = self.register_y.wrapping_sub(1);
         self.update_zero_flag(self.register_y == 0);
-        self.update_negative_flag(self.register_y & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_y & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// EOR - Exclusive OR
@@ -232,7 +232,7 @@ impl CPU {
         self.register_a ^= value;
 
         self.update_zero_flag(self.register_a == 0);
-        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// INC - Increment Memory
@@ -248,7 +248,7 @@ impl CPU {
         self.mem_write(addr, result);
 
         self.update_zero_flag(result == 0);
-        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(result & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// INX - Increment X Register
@@ -259,7 +259,7 @@ impl CPU {
     pub(crate) fn inx(&mut self) {
         self.register_x = self.register_x.wrapping_add(1);
         self.update_zero_flag(self.register_x == 0);
-        self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_x & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// INY - Increment Y Register
@@ -270,7 +270,7 @@ impl CPU {
     pub(crate) fn iny(&mut self) {
         self.register_y = self.register_y.wrapping_add(1);
         self.update_zero_flag(self.register_y == 0);
-        self.update_negative_flag(self.register_y & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_y & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// LDA - Load Accumulator
@@ -284,7 +284,7 @@ impl CPU {
 
         self.register_a = value;
         self.update_zero_flag(self.register_a == 0);
-        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// TAX - Transfer of Accumulator to X
@@ -295,6 +295,6 @@ impl CPU {
     pub(crate) fn tax(&mut self) {
         self.register_x = self.register_a;
         self.update_zero_flag(self.register_x == 0);
-        self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
+        self.update_negative_flag(self.register_x & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 }
