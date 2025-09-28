@@ -116,12 +116,13 @@ impl CPU {
         self.update_negative_flag(value & 0b1000_0000 == 0b1000_0000);
     }
 
-    /// Clears a specific processor status flag. This is used for the following
-    /// instructions:
+    /// Handles all clear flag instructions:
     /// * CLC - Clear Carry Flag
     /// * CLD - Clear Decimal Flag
     /// * CLI - Clear Interrupt Flag
     /// * CLV - Clear Overflow Flag
+    ///
+    /// Clears a specific processor status flag
     #[inline]
     pub(crate) fn clear(&mut self, status: &ProcessorStatus) {
         match status {
@@ -134,6 +135,51 @@ impl CPU {
             ProcessorStatus::Overflow => self.update_overflow_flag(false),
             ProcessorStatus::Negative => unreachable!(),
         }
+    }
+
+    /// CMP - Compare
+    ///
+    /// Compares the content of the accumulator register with a value held
+    /// in memory. This is done through subtraction
+    #[inline]
+    pub(crate) fn cmp(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let result = self.register_a.wrapping_sub(value);
+        self.update_carry_flag(self.register_a >= value);
+        self.update_zero_flag(result == 0);
+        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// CPX - Compare X Register
+    ///
+    /// Compares the content of the x register with a value held
+    /// in memory. This is done through subtraction
+    #[inline]
+    pub(crate) fn cpx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let result = self.register_x.wrapping_sub(value);
+        self.update_carry_flag(self.register_x >= value);
+        self.update_zero_flag(result == 0);
+        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// CPY - Compare Y Register
+    ///
+    /// Compares the content of the y register with a value held
+    /// in memory. This is done through subtraction
+    #[inline]
+    pub(crate) fn cpy(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let result = self.register_y.wrapping_sub(value);
+        self.update_carry_flag(self.register_y >= value);
+        self.update_zero_flag(result == 0);
+        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
     }
 
     /// INX - Increment X Register

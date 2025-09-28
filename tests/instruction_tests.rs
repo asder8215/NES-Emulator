@@ -452,4 +452,52 @@ mod test {
         assert!(!cpu.is_status_flag_set(&ProcessorStatus::Overflow));
     }
     // ===============
+
+    // == CMP TESTS ==
+    #[test]
+    fn test_cmp_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xC9, 0x80, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x80;
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == CPX TESTS ==
+    #[test]
+    fn test_cpx_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xE0, 0x80, 0x00]);
+        cpu.reset();
+        cpu.register_x = 0x80;
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == CPY TESTS ==
+    #[test]
+    fn test_cpy_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xC0, 0x80, 0x00]);
+        cpu.reset();
+        cpu.register_y = 0x80;
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
 }

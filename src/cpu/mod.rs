@@ -152,9 +152,9 @@ impl CPU {
                         self.clear(&processor_status::ProcessorStatus::InterruptDisable)
                     }
                     OpCodeName::CLV => self.clear(&processor_status::ProcessorStatus::Overflow),
-                    OpCodeName::CMP => todo!(),
-                    OpCodeName::CPX => todo!(),
-                    OpCodeName::CPY => todo!(),
+                    OpCodeName::CMP => self.cmp(&opcode_struct.mode),
+                    OpCodeName::CPX => self.cpx(&opcode_struct.mode),
+                    OpCodeName::CPY => self.cpy(&opcode_struct.mode),
                     OpCodeName::DEC => todo!(),
                     OpCodeName::DEX => todo!(),
                     OpCodeName::DEY => todo!(),
