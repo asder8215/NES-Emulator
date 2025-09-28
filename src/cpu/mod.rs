@@ -106,28 +106,28 @@ impl CPU {
                     OpCodeName::AND => self.and(&opcode_struct.mode),
                     OpCodeName::ASL => self.asl(&opcode_struct.mode),
                     OpCodeName::BCC => self.branch(
-                        !self.is_status_flag_set(processor_status::ProcessorStatus::Carry),
+                        !self.is_status_flag_set(&processor_status::ProcessorStatus::Carry),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BCS => self.branch(
-                        self.is_status_flag_set(processor_status::ProcessorStatus::Carry),
+                        self.is_status_flag_set(&processor_status::ProcessorStatus::Carry),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BEQ => self.branch(
-                        self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
+                        self.is_status_flag_set(&processor_status::ProcessorStatus::Zero),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BIT => self.bit(&opcode_struct.mode),
                     OpCodeName::BMI => self.branch(
-                        self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
+                        self.is_status_flag_set(&processor_status::ProcessorStatus::Negative),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BNE => self.branch(
-                        !self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
+                        !self.is_status_flag_set(&processor_status::ProcessorStatus::Zero),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BPL => self.branch(
-                        !self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
+                        !self.is_status_flag_set(&processor_status::ProcessorStatus::Negative),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BRK => {
@@ -139,17 +139,19 @@ impl CPU {
                         return;
                     }
                     OpCodeName::BVC => self.branch(
-                        !self.is_status_flag_set(processor_status::ProcessorStatus::Overflow),
+                        !self.is_status_flag_set(&processor_status::ProcessorStatus::Overflow),
                         &opcode_struct.mode,
                     ),
                     OpCodeName::BVS => self.branch(
-                        self.is_status_flag_set(processor_status::ProcessorStatus::Overflow),
+                        self.is_status_flag_set(&processor_status::ProcessorStatus::Overflow),
                         &opcode_struct.mode,
                     ),
-                    OpCodeName::CLC => todo!(),
-                    OpCodeName::CLD => todo!(),
-                    OpCodeName::CLI => todo!(),
-                    OpCodeName::CLV => todo!(),
+                    OpCodeName::CLC => self.clear(&processor_status::ProcessorStatus::Carry),
+                    OpCodeName::CLD => self.clear(&processor_status::ProcessorStatus::Decimal),
+                    OpCodeName::CLI => {
+                        self.clear(&processor_status::ProcessorStatus::InterruptDisable)
+                    }
+                    OpCodeName::CLV => self.clear(&processor_status::ProcessorStatus::Overflow),
                     OpCodeName::CMP => todo!(),
                     OpCodeName::CPX => todo!(),
                     OpCodeName::CPY => todo!(),

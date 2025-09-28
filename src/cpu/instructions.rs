@@ -2,6 +2,8 @@
 //! These instruction are implemented in accordance with:
 //! https://www.nesdev.org/obelisk-6502-guide/reference.html#
 
+use crate::cpu::processor_status::ProcessorStatus;
+
 use super::{CPU, addressing_mode::AddressingMode, mem::Mem};
 
 impl CPU {
@@ -112,6 +114,26 @@ impl CPU {
         self.update_zero_flag(self.register_a & value == 0);
         self.update_overflow_flag(value & 0b0100_0000 == 0b0100_0000);
         self.update_negative_flag(value & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// Clears a specific processor status flag. This is used for the following
+    /// instructions:
+    /// * CLC - Clear Carry Flag
+    /// * CLD - Clear Decimal Flag
+    /// * CLI - Clear Interrupt Flag
+    /// * CLV - Clear Overflow Flag
+    #[inline]
+    pub(crate) fn clear(&mut self, status: &ProcessorStatus) {
+        match status {
+            ProcessorStatus::Carry => self.update_carry_flag(false),
+            ProcessorStatus::Zero => unreachable!(),
+            ProcessorStatus::InterruptDisable => self.update_interrupt_flag(false),
+            ProcessorStatus::Decimal => self.update_decimal_flag(false),
+            ProcessorStatus::BFlag => unreachable!(),
+            ProcessorStatus::Unused => unreachable!(),
+            ProcessorStatus::Overflow => self.update_overflow_flag(false),
+            ProcessorStatus::Negative => unreachable!(),
+        }
     }
 
     /// INX - Increment X Register

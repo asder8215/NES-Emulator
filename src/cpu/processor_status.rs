@@ -42,7 +42,7 @@ pub enum ProcessorStatus {
 }
 
 impl CPU {
-    pub fn is_status_flag_set(&self, flag: ProcessorStatus) -> bool {
+    pub fn is_status_flag_set(&self, flag: &ProcessorStatus) -> bool {
         match flag {
             ProcessorStatus::Carry => self.status & 0b0000_0001 == 1,
             ProcessorStatus::Zero => self.status & 0b0000_0010 == 0b10,

@@ -10,8 +10,8 @@ mod test {
         cpu.reset();
         cpu.run();
         assert_eq!(cpu.register_a, 0x05);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -22,7 +22,7 @@ mod test {
         cpu.reset();
         cpu.run();
 
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
     }
 
     #[test]
@@ -79,10 +79,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x60);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Overflow));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Overflow));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -97,10 +97,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x60);
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Overflow));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Overflow));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -116,10 +116,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x21);
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Overflow)); // can't overflow if we're adding pos and neg
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Overflow)); // can't overflow if we're adding pos and neg
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -135,10 +135,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0xa1);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Overflow));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Overflow));
         assert!(cpu.status & 0b0000_0010 == 0);
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -154,10 +154,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x0);
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Overflow));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Overflow));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -173,10 +173,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x0);
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Overflow));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Overflow));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -192,10 +192,10 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x80);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Carry));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Overflow));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Carry));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Overflow));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
     // ===============
 
@@ -213,8 +213,8 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x01);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -229,8 +229,8 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x00);
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
     // ===============
 
@@ -248,8 +248,8 @@ mod test {
         cpu.run();
 
         assert_eq!(cpu.register_a, 0x0A);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
 
     #[test]
@@ -260,8 +260,8 @@ mod test {
         cpu.load_and_run(&[0x06, 0x10, 0x00]);
 
         assert_eq!(cpu.mem_read(0x10), 0xAA);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
     // ===============
 
@@ -396,12 +396,60 @@ mod test {
         cpu.register_a = 0x40;
         cpu.run();
 
-        // this should be the last address read before it
-        // returns
         assert_eq!(cpu.register_a, 0x40);
-        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Overflow));
-        assert!(cpu.is_status_flag_set(ProcessorStatus::Negative));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Overflow));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == CLR TESTS ==
+    #[test]
+    fn test_clc_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x18, 0x00]);
+        cpu.reset();
+        cpu.status |= 0b0000_0001;
+        cpu.run();
+
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Carry));
+    }
+
+    #[test]
+    fn test_cld_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xD8, 0x00]);
+        cpu.reset();
+        cpu.status |= 0b0000_1000;
+        cpu.run();
+
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Decimal));
+    }
+
+    #[test]
+    fn test_cli_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x58, 0x00]);
+        cpu.reset();
+        cpu.status |= 0b0000_0100;
+        cpu.run();
+
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::InterruptDisable));
+    }
+
+    #[test]
+    fn test_clv_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xB8, 0x00]);
+        cpu.reset();
+        cpu.status |= 0b0100_0000;
+        cpu.run();
+
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Overflow));
     }
     // ===============
 }
