@@ -32,11 +32,12 @@ impl CPU {
             .wrapping_add(self.status & 0b0000_0001);
 
         self.update_overflow_flag(
-            self.status & 0b0000_0001 == 0b0000_0001,
-            self.register_a <= value,
+            (self.status & 0b0000_0001 == 0b0000_0001) !=
+            (self.register_a <= value)
         );
-        self.update_carry_flag_from_add(self.register_a, value);
-        self.update_zero_and_negative_flags(self.register_a);
+        self.update_carry_flag(self.register_a <= value);
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
     }
 
     /// AND - Logical AND
@@ -49,12 +50,13 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
         self.register_a &= value;
-        self.update_zero_and_negative_flags(self.register_a);
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
     }
 
     /// ASL - Arithmetic Shift Left
     ///
-    /// Shifts all bits of the accumulator register to the left by one. Bit 0 is
+    /// Shifts all bits of the accumulator register or memory to the left by one. Bit 0 is
     /// set to 0 as a result and bit 7 is placed in the carry flag of the processor
     /// status register. In effect, ASL multiplies the content of the accumulator
     /// register by 2. Sets the zero and negative flag as appropriate
@@ -64,16 +66,18 @@ impl CPU {
         if matches!(mode, AddressingMode::Accumulator) {
             old_value = self.register_a;
             self.register_a <<= 1;
-            self.update_zero_and_negative_flags(self.register_a);
+            self.update_zero_flag(self.register_a == 0);
+            self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
         } else {
             let addr = self.get_operand_address(mode);
             old_value = self.mem_read(addr);
             let new_val = old_value << 1;
             self.mem_write(addr, new_val);
-            self.update_zero_and_negative_flags(new_val);
+            self.update_zero_flag(new_val == 0);
+            self.update_negative_flag(new_val & 0b1000_0000 == 0b1000_0000);
         }
 
-        self.update_carry_flag_from_mult(old_value);
+        self.update_carry_flag(old_value & 0b1000_0000 == 0b1000_0000);
     }
 
     /// Handles all branching instructions:
@@ -96,6 +100,21 @@ impl CPU {
         }
     }
 
+    /// BIT - Bit Test
+    /// 
+    /// Test bits in memory against the accumulator register to set or 
+    /// clear the zero flag. Bits 7 and 6 of the value in memory are 
+    /// copied into the N and V flags
+    #[inline]
+    pub(crate) fn bit(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.update_zero_flag(self.register_a & value == 0);
+        self.update_overflow_flag(value & 0b0100_0000 == 0b0100_0000);
+        self.update_negative_flag(value & 0b1000_0000 == 0b1000_0000);
+    }
+
     /// INX - Increment X Register
     ///
     /// Increments the X register by 1 (wraps around on overflow) and sets
@@ -103,7 +122,8 @@ impl CPU {
     #[inline]
     pub(crate) fn inx(&mut self) {
         self.register_x = self.register_x.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.register_x);
+        self.update_zero_flag(self.register_x == 0);
+        self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
     }
 
     /// LDA - Load Accumulator
@@ -116,7 +136,8 @@ impl CPU {
         let value = self.mem_read(addr);
 
         self.register_a = value;
-        self.update_zero_and_negative_flags(self.register_a);
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
     }
 
     /// TAX - Transfer of Accumulator to X
@@ -126,60 +147,67 @@ impl CPU {
     #[inline]
     pub(crate) fn tax(&mut self) {
         self.register_x = self.register_a;
-        self.update_zero_and_negative_flags(self.register_x);
+        self.update_zero_flag(self.register_x == 0);
+        self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
     }
 
-    /// Sets the zero and negative flag accordingly based on the result
-    /// (coming from a register)
-    ///
-    /// https://www.nesdev.org/obelisk-6502-guide/reference.html
-    ///
-    /// https://www.nesdev.org/wiki/Status_flags
+    /// Updates only the carry flag of the processor status
     #[inline]
-    fn update_zero_and_negative_flags(&mut self, result: u8) {
-        if result == 0 {
-            self.status |= 0b0000_0010; // preserve prior status; set ZF to 1
-        } else {
-            self.status &= 0b1111_1101; // preserve prior status; reset ZF to 0
-        }
-
-        if result & 0b1000_0000 == 0b1000_0000 {
-            self.status |= 0b1000_0000; // preserve prior status; set NF to 1
-        } else {
-            self.status &= 0b0111_1111; // preserve prior status; reset NF to 0
-        }
-    }
-
-    /// Updates the carry flag to true with if old bit 7 of the value
-    /// is set; otherwise false
-    #[inline]
-    fn update_carry_flag_from_mult(&mut self, value: u8) {
-        if value & 0b1000_0000 == 0b1000_0000 {
+    fn update_carry_flag(&mut self, condition: bool) {
+        if condition {
             self.status |= 0b0000_0001;
         } else {
             self.status &= 0b1111_1110;
         }
     }
 
-    /// Updates the carry flag to true if register <= value; otherwise
-    /// false
+    /// Updates only the zero flag of the processor status
     #[inline]
-    fn update_carry_flag_from_add(&mut self, register: u8, value: u8) {
-        if register <= value {
-            self.status |= 0b0000_0001;
+    fn update_zero_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_0010;
         } else {
-            self.status &= 0b1111_1110;
+            self.status &= 0b1111_1101;
         }
     }
 
-    /// Sets the overflow flag accordingly in the status by doing a logical
-    /// XOR on the input and output carry
+    /// Updates only the interrupt flag of the processor status
     #[inline]
-    fn update_overflow_flag(&mut self, input_carry: bool, output_carry: bool) {
-        if input_carry != output_carry {
+    fn update_interrupt_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_0100; 
+        } else {
+            self.status &= 0b1111_1011; 
+        }
+    }
+
+    /// Updates only the decimal flag of the processor status
+    #[inline]
+    fn update_decimal_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_1000; 
+        } else {
+            self.status &= 0b1111_0111; 
+        }
+    }
+
+    /// Updates only the overflow flag of the processor status
+    #[inline]
+    fn update_overflow_flag(&mut self, condition: bool) {
+        if condition {
             self.status |= 0b0100_0000;
         } else {
             self.status &= 0b1011_1111;
+        }
+    }
+
+    /// Updates only the negative flag of the processor status
+    #[inline]
+    fn update_negative_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b1000_0000;
+        } else {
+            self.status &= 0b0111_1111;
         }
     }
 }

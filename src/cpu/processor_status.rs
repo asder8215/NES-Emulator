@@ -9,14 +9,14 @@
 //! ---- ----
 //! NV1B DIZC
 //! |||| ||||
-//! |||| |||+- Carry
-//! |||| ||+-- Zero
-//! |||| |+--- Interrupt Disable
-//! |||| +---- Decimal
+//! |||| |||+- Carry (C)
+//! |||| ||+-- Zero (Z)
+//! |||| |+--- Interrupt Disable (I)
+//! |||| +---- Decimal (D)
 //! |||+------ (No CPU effect; see: the B flag)
 //! ||+------- (No CPU effect; always pushed as 1)
-//! |+-------- Overflow
-//! +--------- Negative
+//! |+-------- Overflow (V)
+//! +--------- Negative (N)
 
 use super::CPU;
 

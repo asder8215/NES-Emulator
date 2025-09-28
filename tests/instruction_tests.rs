@@ -383,4 +383,25 @@ mod test {
         // returns
         assert_eq!(cpu.program_counter, 0x8052);
     }
+    // ===============
+
+    // == BIT TESTS ==
+    #[test]
+    fn test_bit_1(){
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x24, 0x80, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x80, 0xC0);
+        cpu.register_a = 0x40;
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.register_a, 0x40);
+        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(ProcessorStatus::Overflow));
+        assert!(cpu.is_status_flag_set(ProcessorStatus::Negative));
+    }
+    // ===============
 }

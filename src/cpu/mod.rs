@@ -117,7 +117,7 @@ impl CPU {
                         self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
                         &opcode_struct.mode,
                     ),
-                    OpCodeName::BIT => todo!(),
+                    OpCodeName::BIT => self.bit(&opcode_struct.mode),
                     OpCodeName::BMI => self.branch(
                         self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
                         &opcode_struct.mode,
