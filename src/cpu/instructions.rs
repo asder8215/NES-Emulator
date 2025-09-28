@@ -76,6 +76,26 @@ impl CPU {
         self.update_carry_flag_from_mult(old_value);
     }
 
+    /// Handles all branching instructions:
+    /// * BCC - Branch if Carry Clear
+    /// * BCS - Branch if Carry Set
+    /// * BEQ - Branch if Equal
+    /// * BMI - Branch if Minus
+    /// * BNE - Branch if Not Equal
+    /// * BPL - Branch if Positive
+    /// * BVC - Branch if Overflow Clear
+    /// * BVS - Branch if Overflow Set
+    ///
+    /// If the condition is true (implied by the instructions name),
+    /// then add the relative displacement to the program counter to cause a
+    /// branch to the new location
+    #[inline]
+    pub(crate) fn branch(&mut self, condition: bool, mode: &AddressingMode) {
+        if condition {
+            self.program_counter = self.get_operand_address(mode);
+        }
+    }
+
     /// INX - Increment X Register
     ///
     /// Increments the X register by 1 (wraps around on overflow) and sets

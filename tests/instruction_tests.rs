@@ -264,4 +264,123 @@ mod test {
         assert!(cpu.is_status_flag_set(ProcessorStatus::Negative));
     }
     // ===============
+
+    // == BRANCH TESTS ==
+    #[test]
+    fn test_bcc_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x90, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_bcs_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xB0, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+
+        cpu.status |= 0x01;
+
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_beq_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xF0, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.status |= 0b10;
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_bmi_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x30, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.status |= 0b1000_0000;
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_bne_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xD0, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_bpl_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x10, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_bvc_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x50, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
+
+    #[test]
+    fn test_bvs_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x90, 0x50]);
+        cpu.mem_write(0x8052, 0x00);
+        cpu.reset();
+        cpu.status |= 0b0100_0000;
+        cpu.run();
+
+        // this should be the last address read before it
+        // returns
+        assert_eq!(cpu.program_counter, 0x8052);
+    }
 }

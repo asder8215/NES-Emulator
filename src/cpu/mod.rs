@@ -11,28 +11,27 @@ use mem::Mem;
 use opcodes::{OpCode, OpCodeName};
 
 pub struct CPU {
-    pub register_a: u8,    // accumulator CPU register (temp storage of data for calc)
-    pub register_x: u8,    // another register to store data
-    pub register_y: u8,    // another register to store data
-    pub stack_pointer: u8, // 8 bit addr for the stack pointer
-    pub status: u8,        // processor status register
-    pub program_counter: u16, // the pc (keeps track of our curr pos in the program)
+    /// accumulator CPU register
+    pub register_a: u8,
+    /// another register to store data
+    pub register_x: u8,
+    /// another register to store data
+    pub register_y: u8,
+    /// 8 bit addr for the stack pointer
+    pub stack_pointer: u8,
+    /// processor status register
+    pub status: u8,
+    /// the pc (keeps track of our curr pos in the program)
+    pub program_counter: u16,
+    /// contains the CPU's Memory Map
+    /// * RAM - [0x0000 ... 0x2000]
+    /// * PPU, APU, GamePads, etc: [0x4020 ... 0x6000]
+    /// * Special storage for cartridges: [0x4020 ... 0x6000]
+    /// * RAM Space for Cartridge: [0x6000 ... 0x8000]
+    /// * PRG ROM: [0x8000 ... 0xFFFF]
     pub(crate) memory: [u8; 0xFFFF],
 }
 
-// Processor Status
-// 7  bit  0
-// ---- ----
-// NV1B DIZC
-// |||| ||||
-// |||| |||+- Carry
-// |||| ||+-- Zero
-// |||| |+--- Interrupt Disable
-// |||| +---- Decimal
-// |||+------ (No CPU effect; see: the B flag)
-// ||+------- (No CPU effect; always pushed as 1)
-// |+-------- Overflow
-// +--------- Negative
 impl Default for CPU {
     fn default() -> Self {
         Self::new()
@@ -99,23 +98,54 @@ impl CPU {
     pub fn run(&mut self) {
         loop {
             let opcode = self.mem_read(self.program_counter);
-            self.program_counter += 1;
+            self.program_counter = self.program_counter.wrapping_add(1);
 
             if let Some(opcode_struct) = OpCode::get(opcode) {
                 match opcode_struct.mnemonic {
                     OpCodeName::ADC => self.adc(&opcode_struct.mode),
                     OpCodeName::AND => self.and(&opcode_struct.mode),
                     OpCodeName::ASL => self.asl(&opcode_struct.mode),
-                    OpCodeName::BCC => todo!(),
-                    OpCodeName::BCS => todo!(),
-                    OpCodeName::BEQ => todo!(),
+                    OpCodeName::BCC => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Carry),
+                        &opcode_struct.mode,
+                    ),
+                    OpCodeName::BCS => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Carry),
+                        &opcode_struct.mode,
+                    ),
+                    OpCodeName::BEQ => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
+                        &opcode_struct.mode,
+                    ),
                     OpCodeName::BIT => todo!(),
-                    OpCodeName::BMI => todo!(),
-                    OpCodeName::BNE => todo!(),
-                    OpCodeName::BPL => todo!(),
-                    OpCodeName::BRK => return,
-                    OpCodeName::BVC => todo!(),
-                    OpCodeName::BVS => todo!(),
+                    OpCodeName::BMI => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
+                        &opcode_struct.mode,
+                    ),
+                    OpCodeName::BNE => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
+                        &opcode_struct.mode,
+                    ),
+                    OpCodeName::BPL => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
+                        &opcode_struct.mode,
+                    ),
+                    OpCodeName::BRK => {
+                        // By technicality on 6502, the PC should not be incremented
+                        // when a BRK instruction is reached. Since I don't want
+                        // to rewrite this code to have incrementation occur everywhere
+                        // except BRK; I'll just put decrementation here.
+                        self.program_counter = self.program_counter.wrapping_sub(1);
+                        return;
+                    }
+                    OpCodeName::BVC => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Overflow),
+                        &opcode_struct.mode,
+                    ),
+                    OpCodeName::BVS => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Overflow),
+                        &opcode_struct.mode,
+                    ),
                     OpCodeName::CLC => todo!(),
                     OpCodeName::CLD => todo!(),
                     OpCodeName::CLI => todo!(),
@@ -161,7 +191,9 @@ impl CPU {
                     OpCodeName::TYA => todo!(),
                 }
                 // move PC to the next instruction to process
-                self.program_counter += (opcode_struct.len - 1) as u16;
+                self.program_counter = self
+                    .program_counter
+                    .wrapping_add((opcode_struct.len - 1) as u16);
             } else {
                 panic!(
                     "Illegal instruction {} reached at address {:#x}",

@@ -1,4 +1,22 @@
-//! All processor status function for debugging and testing will be contained here
+//! Contains functions that can inform you whether a certain flag in the processor
+//! status is set or not
+//!
+//! Here's a visual on how the NES's processor status flags are represented
+//! in a u8
+//!
+//! Processor Status
+//! 7  bit  0
+//! ---- ----
+//! NV1B DIZC
+//! |||| ||||
+//! |||| |||+- Carry
+//! |||| ||+-- Zero
+//! |||| |+--- Interrupt Disable
+//! |||| +---- Decimal
+//! |||+------ (No CPU effect; see: the B flag)
+//! ||+------- (No CPU effect; always pushed as 1)
+//! |+-------- Overflow
+//! +--------- Negative
 
 use super::CPU;
 
