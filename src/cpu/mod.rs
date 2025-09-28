@@ -134,7 +134,7 @@ impl CPU {
                         // By technicality on 6502, the PC should not be incremented
                         // when a BRK instruction is reached. Since I don't want
                         // to rewrite this code to have incrementation occur everywhere
-                        // except BRK; I'll just put decrementation here.
+                        // except BRK, I'll just decrement the PC by 1 here.
                         self.program_counter = self.program_counter.wrapping_sub(1);
                         return;
                     }
@@ -155,13 +155,13 @@ impl CPU {
                     OpCodeName::CMP => self.cmp(&opcode_struct.mode),
                     OpCodeName::CPX => self.cpx(&opcode_struct.mode),
                     OpCodeName::CPY => self.cpy(&opcode_struct.mode),
-                    OpCodeName::DEC => todo!(),
-                    OpCodeName::DEX => todo!(),
-                    OpCodeName::DEY => todo!(),
-                    OpCodeName::EOR => todo!(),
-                    OpCodeName::INC => todo!(),
+                    OpCodeName::DEC => self.dec(&opcode_struct.mode),
+                    OpCodeName::DEX => self.dex(),
+                    OpCodeName::DEY => self.dey(),
+                    OpCodeName::EOR => self.eor(&opcode_struct.mode),
+                    OpCodeName::INC => self.inc(&opcode_struct.mode),
                     OpCodeName::INX => self.inx(),
-                    OpCodeName::INY => todo!(),
+                    OpCodeName::INY => self.iny(),
                     OpCodeName::JMP => todo!(),
                     OpCodeName::JSR => todo!(),
                     OpCodeName::LDA => self.lda(&opcode_struct.mode),

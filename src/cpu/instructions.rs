@@ -182,6 +182,75 @@ impl CPU {
         self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
     }
 
+    /// DEC - Decrement Memory
+    ///
+    /// Decrements the value held in memory by 1 (wraps around on overflow) and sets
+    /// the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn dec(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let result = value.wrapping_sub(1);
+
+        self.mem_write(addr, result);
+        self.update_zero_flag(result == 0);
+        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// DEX - Decrement X Register
+    ///
+    /// Decrements the X register by 1 (wraps around on overflow) and sets
+    /// the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn dex(&mut self) {
+        self.register_x = self.register_x.wrapping_sub(1);
+        self.update_zero_flag(self.register_x == 0);
+        self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// DEY - Decrement Y Register
+    ///
+    /// Decrements the X register by 1 (wraps around on overflow) and sets
+    /// the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn dey(&mut self) {
+        self.register_y = self.register_y.wrapping_sub(1);
+        self.update_zero_flag(self.register_y == 0);
+        self.update_negative_flag(self.register_y & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// EOR - Exclusive OR
+    ///
+    /// Performs an exclusive OR operation on the accumulator register
+    /// with the content in memory
+    #[inline]
+    pub(crate) fn eor(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_a ^= value;
+
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// INC - Increment Memory
+    ///
+    /// Increments the value held in memory by 1 (wraps around on overflow) and sets
+    /// the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn inc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let result = value.wrapping_add(1);
+        self.mem_write(addr, result);
+
+        self.update_zero_flag(result == 0);
+        self.update_negative_flag(result & 0b1000_0000 == 0b1000_0000);
+    }
+
     /// INX - Increment X Register
     ///
     /// Increments the X register by 1 (wraps around on overflow) and sets
@@ -191,6 +260,17 @@ impl CPU {
         self.register_x = self.register_x.wrapping_add(1);
         self.update_zero_flag(self.register_x == 0);
         self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
+    }
+
+    /// INY - Increment Y Register
+    ///
+    /// Increments the Y register by 1 (wraps around on overflow) and sets
+    /// the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn iny(&mut self) {
+        self.register_y = self.register_y.wrapping_add(1);
+        self.update_zero_flag(self.register_y == 0);
+        self.update_negative_flag(self.register_y & 0b1000_0000 == 0b1000_0000);
     }
 
     /// LDA - Load Accumulator
@@ -216,65 +296,5 @@ impl CPU {
         self.register_x = self.register_a;
         self.update_zero_flag(self.register_x == 0);
         self.update_negative_flag(self.register_x & 0b1000_0000 == 0b1000_0000);
-    }
-
-    /// Updates only the carry flag of the processor status
-    #[inline]
-    fn update_carry_flag(&mut self, condition: bool) {
-        if condition {
-            self.status |= 0b0000_0001;
-        } else {
-            self.status &= 0b1111_1110;
-        }
-    }
-
-    /// Updates only the zero flag of the processor status
-    #[inline]
-    fn update_zero_flag(&mut self, condition: bool) {
-        if condition {
-            self.status |= 0b0000_0010;
-        } else {
-            self.status &= 0b1111_1101;
-        }
-    }
-
-    /// Updates only the interrupt flag of the processor status
-    #[inline]
-    fn update_interrupt_flag(&mut self, condition: bool) {
-        if condition {
-            self.status |= 0b0000_0100;
-        } else {
-            self.status &= 0b1111_1011;
-        }
-    }
-
-    /// Updates only the decimal flag of the processor status
-    #[inline]
-    fn update_decimal_flag(&mut self, condition: bool) {
-        if condition {
-            self.status |= 0b0000_1000;
-        } else {
-            self.status &= 0b1111_0111;
-        }
-    }
-
-    /// Updates only the overflow flag of the processor status
-    #[inline]
-    fn update_overflow_flag(&mut self, condition: bool) {
-        if condition {
-            self.status |= 0b0100_0000;
-        } else {
-            self.status &= 0b1011_1111;
-        }
-    }
-
-    /// Updates only the negative flag of the processor status
-    #[inline]
-    fn update_negative_flag(&mut self, condition: bool) {
-        if condition {
-            self.status |= 0b1000_0000;
-        } else {
-            self.status &= 0b0111_1111;
-        }
     }
 }

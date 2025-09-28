@@ -1,70 +1,11 @@
+//! All CPU instruction tests reside here
+//!
+//! These tests are not exhaustive though, so any contributions
+//! or additions here would be appreciated
+
 #[cfg(test)]
 mod test {
     use nes_emulator::cpu::{CPU, mem::Mem, processor_status::ProcessorStatus};
-
-    // LDA TESTS
-    #[test]
-    fn test_0xa9_lda_immediate_load_data() {
-        let mut cpu = CPU::new();
-        cpu.load(&[0xa9, 0x05, 0x00]);
-        cpu.reset();
-        cpu.run();
-        assert_eq!(cpu.register_a, 0x05);
-        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
-        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
-    }
-
-    #[test]
-    fn test_0xa9_lda_zero_flag() {
-        let mut cpu = CPU::new();
-
-        cpu.load(&[0xa9, 0x00, 0x00]);
-        cpu.reset();
-        cpu.run();
-
-        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
-    }
-
-    #[test]
-    fn test_lda_from_memory() {
-        let mut cpu = CPU::new();
-        cpu.mem_write(0x10, 0x55);
-
-        cpu.load_and_run(&[0xa5, 0x10, 0x00]);
-
-        assert_eq!(cpu.register_a, 0x55);
-    }
-
-    // ===============
-
-    // LDA, TAX, INX, TESTS
-    #[test]
-    fn test_5_ops_working_together() {
-        let mut cpu = CPU::new();
-
-        cpu.load(&[0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
-        cpu.reset();
-        cpu.run();
-
-        assert_eq!(cpu.register_x, 0xc1)
-    }
-
-    // INX TESTS
-    #[test]
-    fn test_inx_overflow() {
-        let mut cpu = CPU::new();
-
-        cpu.load(&[0xe8, 0xe8, 0x00]);
-        cpu.reset();
-
-        cpu.register_x = 0xff;
-
-        cpu.run();
-
-        assert_eq!(cpu.register_x, 1)
-    }
-
-    // ===============
 
     // == ADC TESTS ==
     #[test]
@@ -498,6 +439,165 @@ mod test {
         assert!(cpu.is_status_flag_set(&ProcessorStatus::Carry));
         assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
         assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == DEC TESTS ==
+    #[test]
+    fn test_dec_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xC6, 0x80, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x80, 0x8C);
+        cpu.run();
+
+        assert_eq!(cpu.mem_read(0x80), 0x8B);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == DEX TESTS ==
+    #[test]
+    fn test_dex_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xCA, 0x00]);
+        cpu.reset();
+        cpu.register_x = 0x8C;
+        cpu.run();
+
+        assert_eq!(cpu.register_x, 0x8B);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == DEY TESTS ==
+    #[test]
+    fn test_dey_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x88, 0x00]);
+        cpu.reset();
+        cpu.register_y = 0x8C;
+        cpu.run();
+
+        assert_eq!(cpu.register_y, 0x8B);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == EOR TESTS ==
+    #[test]
+    fn test_eor_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x49, 0x45, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x77;
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 0x32);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // == INC TESTS ==
+    #[test]
+    fn test_inc_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xE6, 0x80, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x80, 0x8C);
+        cpu.run();
+
+        assert_eq!(cpu.mem_read(0x80), 0x8D);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // INX TESTS
+    #[test]
+    fn test_inx_overflow() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xe8, 0xe8, 0x00]);
+        cpu.reset();
+
+        cpu.register_x = 0xff;
+
+        cpu.run();
+
+        assert_eq!(cpu.register_x, 1)
+    }
+    // ===============
+
+    // == INY TESTS ==
+    #[test]
+    fn test_iny_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xC8, 0x00]);
+        cpu.reset();
+        cpu.register_y = 0x8C;
+        cpu.run();
+
+        assert_eq!(cpu.register_y, 0x8D);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
+    // LDA TESTS
+    #[test]
+    fn test_0xa9_lda_immediate_load_data() {
+        let mut cpu = CPU::new();
+        cpu.load(&[0xa9, 0x05, 0x00]);
+        cpu.reset();
+        cpu.run();
+        assert_eq!(cpu.register_a, 0x05);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+
+    #[test]
+    fn test_0xa9_lda_zero_flag() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xa9, 0x00, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+    }
+
+    #[test]
+    fn test_lda_from_memory() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0x10, 0x55);
+
+        cpu.load_and_run(&[0xa5, 0x10, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x55);
+    }
+    // ===============
+
+    // LDA, TAX, INX, TESTS
+    #[test]
+    fn test_5_ops_working_together() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert_eq!(cpu.register_x, 0xc1)
     }
     // ===============
 }

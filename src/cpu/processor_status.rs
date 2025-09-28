@@ -42,6 +42,7 @@ pub enum ProcessorStatus {
 }
 
 impl CPU {
+    /// Checks if a specific processor status flag is set
     pub fn is_status_flag_set(&self, flag: &ProcessorStatus) -> bool {
         match flag {
             ProcessorStatus::Carry => self.status & 0b0000_0001 == 1,
@@ -52,6 +53,66 @@ impl CPU {
             ProcessorStatus::Unused => unreachable!(),
             ProcessorStatus::Overflow => self.status & 0b0100_0000 == 0b100_0000,
             ProcessorStatus::Negative => self.status & 0b1000_0000 == 0b1000_0000,
+        }
+    }
+
+    /// Updates only the carry flag of the processor status
+    #[inline]
+    pub(crate) fn update_carry_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_0001;
+        } else {
+            self.status &= 0b1111_1110;
+        }
+    }
+
+    /// Updates only the zero flag of the processor status
+    #[inline]
+    pub(crate) fn update_zero_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_0010;
+        } else {
+            self.status &= 0b1111_1101;
+        }
+    }
+
+    /// Updates only the interrupt flag of the processor status
+    #[inline]
+    pub(crate) fn update_interrupt_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_0100;
+        } else {
+            self.status &= 0b1111_1011;
+        }
+    }
+
+    /// Updates only the decimal flag of the processor status
+    #[inline]
+    pub(crate) fn update_decimal_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0000_1000;
+        } else {
+            self.status &= 0b1111_0111;
+        }
+    }
+
+    /// Updates only the overflow flag of the processor status
+    #[inline]
+    pub(crate) fn update_overflow_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b0100_0000;
+        } else {
+            self.status &= 0b1011_1111;
+        }
+    }
+
+    /// Updates only the negative flag of the processor status
+    #[inline]
+    pub(crate) fn update_negative_flag(&mut self, condition: bool) {
+        if condition {
+            self.status |= 0b1000_0000;
+        } else {
+            self.status &= 0b0111_1111;
         }
     }
 }
