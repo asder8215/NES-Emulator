@@ -387,7 +387,7 @@ mod test {
 
     // == BIT TESTS ==
     #[test]
-    fn test_bit_1(){
+    fn test_bit_1() {
         let mut cpu = CPU::new();
 
         cpu.load(&[0x24, 0x80, 0x00]);

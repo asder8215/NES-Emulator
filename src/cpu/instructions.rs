@@ -32,8 +32,7 @@ impl CPU {
             .wrapping_add(self.status & 0b0000_0001);
 
         self.update_overflow_flag(
-            (self.status & 0b0000_0001 == 0b0000_0001) !=
-            (self.register_a <= value)
+            (self.status & 0b0000_0001 == 0b0000_0001) != (self.register_a <= value),
         );
         self.update_carry_flag(self.register_a <= value);
         self.update_zero_flag(self.register_a == 0);
@@ -101,9 +100,9 @@ impl CPU {
     }
 
     /// BIT - Bit Test
-    /// 
-    /// Test bits in memory against the accumulator register to set or 
-    /// clear the zero flag. Bits 7 and 6 of the value in memory are 
+    ///
+    /// Test bits in memory against the accumulator register to set or
+    /// clear the zero flag. Bits 7 and 6 of the value in memory are
     /// copied into the N and V flags
     #[inline]
     pub(crate) fn bit(&mut self, mode: &AddressingMode) {
@@ -175,9 +174,9 @@ impl CPU {
     #[inline]
     fn update_interrupt_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0000_0100; 
+            self.status |= 0b0000_0100;
         } else {
-            self.status &= 0b1111_1011; 
+            self.status &= 0b1111_1011;
         }
     }
 
@@ -185,9 +184,9 @@ impl CPU {
     #[inline]
     fn update_decimal_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0000_1000; 
+            self.status |= 0b0000_1000;
         } else {
-            self.status &= 0b1111_0111; 
+            self.status &= 0b1111_0111;
         }
     }
 
