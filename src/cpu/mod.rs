@@ -46,7 +46,7 @@ impl CPU {
             register_x: 0,
             register_y: 0,
             stack_pointer: 0,
-            status: 0,
+            status: 0b10_0100, // decimal and interrupt disable flag is turned on
             program_counter: 0,
             memory: [0; 0xFFFF],
         }
