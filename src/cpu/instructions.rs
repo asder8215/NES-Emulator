@@ -2,7 +2,10 @@
 //! These instruction are implemented in accordance with:
 //! https://www.nesdev.org/obelisk-6502-guide/reference.html#
 
-use crate::cpu::processor_status::{CARRY_BIT, NEGATIVE_BIT, OVERFLOW_BIT, ProcessorStatus};
+use crate::cpu::{
+    STACK,
+    processor_status::{CARRY_BIT, NEGATIVE_BIT, OVERFLOW_BIT, ProcessorStatus},
+};
 
 use super::{CPU, addressing_mode::AddressingMode, mem::Mem};
 
@@ -271,6 +274,44 @@ impl CPU {
         self.register_y = self.register_y.wrapping_add(1);
         self.update_zero_flag(self.register_y == 0);
         self.update_negative_flag(self.register_y & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// JMP - Jump
+    ///
+    /// Sets the program counter to the address specified by operand
+    #[inline]
+    pub(crate) fn jmp(&mut self, mode: &AddressingMode) {
+        self.program_counter = self.get_operand_address(mode);
+    }
+
+    /// JSR - Jump to Subroutine
+    ///
+    /// Pushes the address (minus one) of the return point to the stack
+    /// and then sets the program counter to the target memory address
+    ///
+    /// This is what is used to return back to the address after a function
+    /// call
+    #[inline]
+    pub(crate) fn jsr(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+
+        // Since we want to return back to the address where this
+        // subroutine was invoked, we store PC + 2 - 1 (2 bytes
+        // bc JSR is 3 bytes long, one of them already processed
+        // for the instruction itself, and subtract by 1 to get the
+        // addr to the last byte before viewing the next instruction
+        // inside the parent region of code).
+        let next_ins = self.program_counter.wrapping_add(1);
+        let (msb_byte, lsb_byte) = ((next_ins >> 8) as u8, next_ins as u8);
+
+        // we do two separate writes to the STACK because we want to only
+        // write within the STACK region 0x100 - 0x1FF inclusive (do not touch
+        // below 0x100 or above 0x1FF)
+        self.mem_write(STACK + self.stack_pointer as u16, msb_byte);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+        self.mem_write(STACK + self.stack_pointer as u16, lsb_byte);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+        self.program_counter = addr;
     }
 
     /// LDA - Load Accumulator

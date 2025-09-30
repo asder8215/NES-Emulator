@@ -554,6 +554,37 @@ mod test {
     }
     // ===============
 
+    // == JMP TESTS ==
+    #[test]
+    fn test_jmp_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x4C, 0x21, 0x20]);
+        cpu.reset();
+        cpu.mem_write(0x2021, 0x00);
+        cpu.run();
+
+        assert_eq!(cpu.program_counter, 0x2021);
+    }
+    // ===============
+
+    // == JMP TESTS ==
+    #[test]
+    fn test_jsr_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x20, 0x21, 0x20]);
+        cpu.reset();
+        cpu.mem_write(0x2021, 0x00);
+        cpu.run();
+
+        assert_eq!(cpu.program_counter, 0x2021);
+        assert_eq!(cpu.stack_pointer, 0xFB);
+        assert_eq!(cpu.mem_read(0x1FD), 0x80);
+        assert_eq!(cpu.mem_read(0x1FC), 0x02);
+    }
+    // ===============
+
     // LDA TESTS
     #[test]
     fn test_0xa9_lda_immediate_load_data() {

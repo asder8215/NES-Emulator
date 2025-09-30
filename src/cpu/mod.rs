@@ -10,6 +10,11 @@ pub mod processor_status;
 use mem::Mem;
 use opcodes::{OpCode, OpCodeName};
 
+/// The stack pointer offsets from this
+/// base address
+const STACK: u16 = 0x100;
+const STACK_RESET: u8 = 0xfd;
+
 pub struct CPU {
     /// accumulator CPU register
     pub register_a: u8,
@@ -45,7 +50,7 @@ impl CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
-            stack_pointer: 0,
+            stack_pointer: STACK_RESET,
             status: 0b10_0100, // decimal and interrupt disable flag is turned on
             program_counter: 0,
             memory: [0; 0xFFFF],
@@ -62,7 +67,8 @@ impl CPU {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
-        self.status = 0;
+        self.stack_pointer = STACK_RESET;
+        self.status = 0b10_0100;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -162,8 +168,19 @@ impl CPU {
                     OpCodeName::INC => self.inc(&opcode_struct.mode),
                     OpCodeName::INX => self.inx(),
                     OpCodeName::INY => self.iny(),
-                    OpCodeName::JMP => todo!(),
-                    OpCodeName::JSR => todo!(),
+                    OpCodeName::JMP => {
+                        self.jmp(&opcode_struct.mode);
+                        // the reason why we continue is bc
+                        // jump instructions are not *relative*
+                        // to the next instruction, so we do not
+                        // add the opcode_struct.len() - 1 bytes
+                        // to the PC
+                        continue;
+                    }
+                    OpCodeName::JSR => {
+                        self.jsr(&opcode_struct.mode);
+                        continue;
+                    }
                     OpCodeName::LDA => self.lda(&opcode_struct.mode),
                     OpCodeName::LDX => todo!(),
                     OpCodeName::LDY => todo!(),
