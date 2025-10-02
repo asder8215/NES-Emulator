@@ -399,6 +399,44 @@ impl CPU {
         self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
+    /// PHA - Push Accumulator
+    /// 
+    /// Push a copy of the content in accumulator to the stack
+    #[inline]
+    pub(crate) fn pha(&mut self) {
+        self.mem_write(STACK + self.stack_pointer as u16, self.register_a);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+    }
+
+    /// PHP - Push Processor Status
+    /// 
+    /// Push a copy of the content in processor status register to the stack
+    #[inline]
+    pub(crate) fn php(&mut self) {
+        self.mem_write(STACK + self.stack_pointer as u16, self.status);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+    }
+
+    /// PLA - Pull Accumulator
+    /// 
+    /// Pulls an 8 bit value from the stack into the accumulator
+    #[inline]
+    pub(crate) fn pla(&mut self) {
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        self.register_a = self.mem_read(STACK + self.stack_pointer as u16);
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// PLP - Pull Processor Status
+    /// 
+    /// Pulls an 8 bit value from the stack into the processor status
+    #[inline]
+    pub(crate) fn plp(&mut self) {
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        self.status = self.mem_read(STACK + self.stack_pointer as u16);
+    }
+
     /// TAX - Transfer of Accumulator to X
     ///
     /// Copies the content of the accumulator register into the X register

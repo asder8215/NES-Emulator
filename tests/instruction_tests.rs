@@ -731,6 +731,70 @@ mod test {
     }
     // ===============
 
+    // == PHA TESTS ==
+    #[test]
+    fn test_pha_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x48, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x56;
+        cpu.run();
+
+        assert_eq!(cpu.stack_pointer, 0xFC);
+        assert_eq!(cpu.register_a, 0x56);
+        assert_eq!(cpu.mem_read(0x1FD), 0x56);
+    }
+    // ===============
+
+    // == PHP TESTS ==
+    #[test]
+    fn test_php_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x08, 0x00]);
+        cpu.reset();
+        cpu.status = 0b1000_1100;
+        cpu.run();
+
+        assert_eq!(cpu.stack_pointer, 0xFC);
+        assert_eq!(cpu.status, 0b1000_1100);
+        assert_eq!(cpu.mem_read(0x1FD), 0b1000_1100);
+    }
+    // ===============
+
+    // == PLA TESTS ==
+    #[test]
+    fn test_pla_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x68, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x1FE, 0x59);
+        cpu.run();
+
+        assert_eq!(cpu.stack_pointer, 0xFE);
+        assert_eq!(cpu.register_a, 0x59);
+        assert_eq!(cpu.mem_read(0x1FE), 0x59);
+    }
+    // ===============
+
+    // == PLP TESTS ==
+    #[test]
+    fn test_plp_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x28, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x1FE, 0b1100_0101);
+        cpu.run();
+
+        assert_eq!(cpu.stack_pointer, 0xFE);
+        assert_eq!(cpu.status, 0b1100_0101);
+        assert_eq!(cpu.mem_read(0x1FE), 0b1100_0101);
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {
