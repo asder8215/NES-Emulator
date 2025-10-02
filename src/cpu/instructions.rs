@@ -316,8 +316,8 @@ impl CPU {
 
     /// LDA - Load Accumulator
     ///
-    /// Takes in an accumulator value and sets the zero and negative
-    /// flag as appropriate
+    /// Loads a value in memory into the accumulator register and
+    /// sets the zero and negative flag as appropriate
     #[inline]
     pub(crate) fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
@@ -326,6 +326,34 @@ impl CPU {
         self.register_a = value;
         self.update_zero_flag(self.register_a == 0);
         self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// LDX - Load X Register
+    ///
+    /// Loads a value in memory into the x register and
+    /// sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn ldx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_x = value;
+        self.update_zero_flag(self.register_x == 0);
+        self.update_negative_flag(self.register_x & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// LDY - Load Y Register
+    ///
+    /// Loads a value in memory into the y register and
+    /// sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn ldy(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_y = value;
+        self.update_zero_flag(self.register_y == 0);
+        self.update_negative_flag(self.register_y & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// TAX - Transfer of Accumulator to X

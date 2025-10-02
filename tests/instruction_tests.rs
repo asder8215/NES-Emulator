@@ -619,6 +619,74 @@ mod test {
     }
     // ===============
 
+    // LDX TESTS
+    #[test]
+    fn test_0xa9_ldx_immediate_load_data() {
+        let mut cpu = CPU::new();
+        cpu.load(&[0xa2, 0x05, 0x00]);
+        cpu.reset();
+        cpu.run();
+        assert_eq!(cpu.register_x, 0x05);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+
+    #[test]
+    fn test_0xa9_ldx_zero_flag() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xa2, 0x00, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+    }
+
+    #[test]
+    fn test_ldx_from_memory() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0x10, 0x55);
+
+        cpu.load_and_run(&[0xa6, 0x10, 0x00]);
+
+        assert_eq!(cpu.register_x, 0x55);
+    }
+    // ===============
+
+    // LDY TESTS
+    #[test]
+    fn test_0xa9_ldy_immediate_load_data() {
+        let mut cpu = CPU::new();
+        cpu.load(&[0xa0, 0x05, 0x00]);
+        cpu.reset();
+        cpu.run();
+        assert_eq!(cpu.register_y, 0x05);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+
+    #[test]
+    fn test_0xa9_ldy_zero_flag() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xa0, 0x00, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(&ProcessorStatus::Zero));
+    }
+
+    #[test]
+    fn test_ldy_from_memory() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0x10, 0x55);
+
+        cpu.load_and_run(&[0xa4, 0x10, 0x00]);
+
+        assert_eq!(cpu.register_y, 0x55);
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {
