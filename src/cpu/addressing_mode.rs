@@ -26,7 +26,7 @@ pub(crate) enum AddressingMode {
 impl CPU {
     /// Given an addressing mode for an op code, return the target address of
     /// that the op code wants to operate on
-    pub(crate) fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
+    pub(crate) fn get_operand_address(&self, mode: AddressingMode) -> u16 {
         match mode {
             AddressingMode::Implicit => {
                 // certain instructions do not need a target

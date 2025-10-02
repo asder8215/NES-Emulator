@@ -27,7 +27,7 @@ impl CPU {
     /// The overflow flag can be set accordingly based on what (input carry ^ output carry)
     /// results to
     #[inline]
-    pub(crate) fn adc(&mut self, mode: &AddressingMode) {
+    pub(crate) fn adc(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -50,7 +50,7 @@ impl CPU {
     /// from memory, storing it back into the accumulator register. Sets the zero
     /// and negative flag as appropriate
     #[inline]
-    pub(crate) fn and(&mut self, mode: &AddressingMode) {
+    pub(crate) fn and(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
         self.register_a &= value;
@@ -65,7 +65,7 @@ impl CPU {
     /// status register. In effect, ASL multiplies the content of the accumulator
     /// register by 2. Sets the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn asl(&mut self, mode: &AddressingMode) {
+    pub(crate) fn asl(&mut self, mode: AddressingMode) {
         let old_value: u8;
         if matches!(mode, AddressingMode::Accumulator) {
             old_value = self.register_a;
@@ -98,7 +98,7 @@ impl CPU {
     /// then add the relative displacement to the program counter to cause a
     /// branch to the new location
     #[inline]
-    pub(crate) fn branch(&mut self, condition: bool, mode: &AddressingMode) {
+    pub(crate) fn branch(&mut self, condition: bool, mode: AddressingMode) {
         if condition {
             self.program_counter = self.get_operand_address(mode);
         }
@@ -110,7 +110,7 @@ impl CPU {
     /// clear the zero flag. Bits 7 and 6 of the value in memory are
     /// copied into the N and V flags
     #[inline]
-    pub(crate) fn bit(&mut self, mode: &AddressingMode) {
+    pub(crate) fn bit(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -145,7 +145,7 @@ impl CPU {
     /// Compares the content of the accumulator register with a value held
     /// in memory. This is done through subtraction
     #[inline]
-    pub(crate) fn cmp(&mut self, mode: &AddressingMode) {
+    pub(crate) fn cmp(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -160,7 +160,7 @@ impl CPU {
     /// Compares the content of the x register with a value held
     /// in memory. This is done through subtraction
     #[inline]
-    pub(crate) fn cpx(&mut self, mode: &AddressingMode) {
+    pub(crate) fn cpx(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -175,7 +175,7 @@ impl CPU {
     /// Compares the content of the y register with a value held
     /// in memory. This is done through subtraction
     #[inline]
-    pub(crate) fn cpy(&mut self, mode: &AddressingMode) {
+    pub(crate) fn cpy(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -190,7 +190,7 @@ impl CPU {
     /// Decrements the value held in memory by 1 (wraps around on overflow) and sets
     /// the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn dec(&mut self, mode: &AddressingMode) {
+    pub(crate) fn dec(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -228,7 +228,7 @@ impl CPU {
     /// Performs an exclusive OR operation on the accumulator register
     /// with the content in memory
     #[inline]
-    pub(crate) fn eor(&mut self, mode: &AddressingMode) {
+    pub(crate) fn eor(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -243,7 +243,7 @@ impl CPU {
     /// Increments the value held in memory by 1 (wraps around on overflow) and sets
     /// the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn inc(&mut self, mode: &AddressingMode) {
+    pub(crate) fn inc(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -280,7 +280,7 @@ impl CPU {
     ///
     /// Sets the program counter to the address specified by operand
     #[inline]
-    pub(crate) fn jmp(&mut self, mode: &AddressingMode) {
+    pub(crate) fn jmp(&mut self, mode: AddressingMode) {
         self.program_counter = self.get_operand_address(mode);
     }
 
@@ -292,7 +292,7 @@ impl CPU {
     /// This is what is used to return back to the address after a function
     /// call
     #[inline]
-    pub(crate) fn jsr(&mut self, mode: &AddressingMode) {
+    pub(crate) fn jsr(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
 
         // Since we want to return back to the address where this
@@ -319,7 +319,7 @@ impl CPU {
     /// Loads a value in memory into the accumulator register and
     /// sets the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn lda(&mut self, mode: &AddressingMode) {
+    pub(crate) fn lda(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -333,7 +333,7 @@ impl CPU {
     /// Loads a value in memory into the x register and
     /// sets the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn ldx(&mut self, mode: &AddressingMode) {
+    pub(crate) fn ldx(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -347,7 +347,7 @@ impl CPU {
     /// Loads a value in memory into the y register and
     /// sets the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn ldy(&mut self, mode: &AddressingMode) {
+    pub(crate) fn ldy(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
@@ -363,7 +363,7 @@ impl CPU {
     /// status register. In effect, ASL divides the content of the accumulator
     /// register by 2. Sets the zero and negative flag as appropriate
     #[inline]
-    pub(crate) fn lsr(&mut self, mode: &AddressingMode) {
+    pub(crate) fn lsr(&mut self, mode: AddressingMode) {
         let old_value: u8;
         if matches!(mode, AddressingMode::Accumulator) {
             old_value = self.register_a;
@@ -382,6 +382,21 @@ impl CPU {
         self.update_negative_flag(false);
         // carry bit is set based on whether bit 0 was 1 or 0 in old_value
         self.update_carry_flag(old_value & CARRY_BIT == CARRY_BIT);
+    }
+
+    /// ORA - Logical Inclusive OR
+    ///
+    /// An inclusive OR is performed with the content inside the accumulator
+    /// register using the content of a byte in memory and sets the zero flag
+    /// and negative flag as appropriate
+    #[inline]
+    pub(crate) fn ora(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_a |= value;
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// TAX - Transfer of Accumulator to X

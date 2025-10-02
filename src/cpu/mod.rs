@@ -108,33 +108,33 @@ impl CPU {
 
             if let Some(opcode_struct) = OpCode::get(opcode) {
                 match opcode_struct.mnemonic {
-                    OpCodeName::ADC => self.adc(&opcode_struct.mode),
-                    OpCodeName::AND => self.and(&opcode_struct.mode),
-                    OpCodeName::ASL => self.asl(&opcode_struct.mode),
+                    OpCodeName::ADC => self.adc(opcode_struct.mode),
+                    OpCodeName::AND => self.and(opcode_struct.mode),
+                    OpCodeName::ASL => self.asl(opcode_struct.mode),
                     OpCodeName::BCC => self.branch(
                         !self.is_status_flag_set(&processor_status::ProcessorStatus::Carry),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::BCS => self.branch(
                         self.is_status_flag_set(&processor_status::ProcessorStatus::Carry),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::BEQ => self.branch(
                         self.is_status_flag_set(&processor_status::ProcessorStatus::Zero),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
-                    OpCodeName::BIT => self.bit(&opcode_struct.mode),
+                    OpCodeName::BIT => self.bit(opcode_struct.mode),
                     OpCodeName::BMI => self.branch(
                         self.is_status_flag_set(&processor_status::ProcessorStatus::Negative),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::BNE => self.branch(
                         !self.is_status_flag_set(&processor_status::ProcessorStatus::Zero),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::BPL => self.branch(
                         !self.is_status_flag_set(&processor_status::ProcessorStatus::Negative),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::BRK => {
                         // By technicality on 6502, the PC should not be incremented
@@ -146,11 +146,11 @@ impl CPU {
                     }
                     OpCodeName::BVC => self.branch(
                         !self.is_status_flag_set(&processor_status::ProcessorStatus::Overflow),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::BVS => self.branch(
                         self.is_status_flag_set(&processor_status::ProcessorStatus::Overflow),
-                        &opcode_struct.mode,
+                        opcode_struct.mode,
                     ),
                     OpCodeName::CLC => self.clear(&processor_status::ProcessorStatus::Carry),
                     OpCodeName::CLD => self.clear(&processor_status::ProcessorStatus::Decimal),
@@ -158,18 +158,18 @@ impl CPU {
                         self.clear(&processor_status::ProcessorStatus::InterruptDisable)
                     }
                     OpCodeName::CLV => self.clear(&processor_status::ProcessorStatus::Overflow),
-                    OpCodeName::CMP => self.cmp(&opcode_struct.mode),
-                    OpCodeName::CPX => self.cpx(&opcode_struct.mode),
-                    OpCodeName::CPY => self.cpy(&opcode_struct.mode),
-                    OpCodeName::DEC => self.dec(&opcode_struct.mode),
+                    OpCodeName::CMP => self.cmp(opcode_struct.mode),
+                    OpCodeName::CPX => self.cpx(opcode_struct.mode),
+                    OpCodeName::CPY => self.cpy(opcode_struct.mode),
+                    OpCodeName::DEC => self.dec(opcode_struct.mode),
                     OpCodeName::DEX => self.dex(),
                     OpCodeName::DEY => self.dey(),
-                    OpCodeName::EOR => self.eor(&opcode_struct.mode),
-                    OpCodeName::INC => self.inc(&opcode_struct.mode),
+                    OpCodeName::EOR => self.eor(opcode_struct.mode),
+                    OpCodeName::INC => self.inc(opcode_struct.mode),
                     OpCodeName::INX => self.inx(),
                     OpCodeName::INY => self.iny(),
                     OpCodeName::JMP => {
-                        self.jmp(&opcode_struct.mode);
+                        self.jmp(opcode_struct.mode);
                         // the reason why we continue is bc
                         // jump instructions are not *relative*
                         // to the next instruction, so we do not
@@ -178,15 +178,15 @@ impl CPU {
                         continue;
                     }
                     OpCodeName::JSR => {
-                        self.jsr(&opcode_struct.mode);
+                        self.jsr(opcode_struct.mode);
                         continue;
                     }
-                    OpCodeName::LDA => self.lda(&opcode_struct.mode),
-                    OpCodeName::LDX => self.ldx(&opcode_struct.mode),
-                    OpCodeName::LDY => self.ldy(&opcode_struct.mode),
-                    OpCodeName::LSR => self.lsr(&opcode_struct.mode),
+                    OpCodeName::LDA => self.lda(opcode_struct.mode),
+                    OpCodeName::LDX => self.ldx(opcode_struct.mode),
+                    OpCodeName::LDY => self.ldy(opcode_struct.mode),
+                    OpCodeName::LSR => self.lsr(opcode_struct.mode),
                     OpCodeName::NOP => {} // does nothing lol
-                    OpCodeName::ORA => todo!(),
+                    OpCodeName::ORA => self.ora(opcode_struct.mode),
                     OpCodeName::PHA => todo!(),
                     OpCodeName::PHP => todo!(),
                     OpCodeName::PLA => todo!(),

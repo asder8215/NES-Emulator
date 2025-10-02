@@ -50,6 +50,7 @@ pub enum ProcessorStatus {
 
 impl CPU {
     /// Checks if a specific processor status flag is set
+    #[inline]
     pub fn is_status_flag_set(&self, flag: &ProcessorStatus) -> bool {
         match flag {
             ProcessorStatus::Carry => self.status & CARRY_BIT == 1,

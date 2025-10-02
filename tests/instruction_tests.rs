@@ -715,6 +715,22 @@ mod test {
     }
     // ===============
 
+    // == ORA TESTS ==
+    #[test]
+    fn test_ora_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x09, 0x45, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x76;
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 0x77);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {
