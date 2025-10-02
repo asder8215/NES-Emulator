@@ -141,7 +141,6 @@ mod test {
     // ===============
 
     // == AND TESTS ==
-
     #[test]
     fn test_and_non_zero_res() {
         let mut cpu = CPU::new();
@@ -176,7 +175,6 @@ mod test {
     // ===============
 
     // == ASL TESTS ==
-
     #[test]
     fn test_asl_1() {
         let mut cpu = CPU::new();
@@ -684,6 +682,36 @@ mod test {
         cpu.load_and_run(&[0xa4, 0x10, 0x00]);
 
         assert_eq!(cpu.register_y, 0x55);
+    }
+    // ===============
+
+    // == ASL TESTS ==
+    #[test]
+    fn test_lsr_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x4A, 0x00]);
+        cpu.reset();
+
+        cpu.register_a = 0x05;
+
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 0x02);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
+    }
+
+    #[test]
+    fn test_lsr_from_mem() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0x10, 0x55);
+
+        cpu.load_and_run(&[0x46, 0x10, 0x00]);
+
+        assert_eq!(cpu.mem_read(0x10), 0x2A);
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(&ProcessorStatus::Negative));
     }
     // ===============
 

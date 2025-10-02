@@ -356,6 +356,34 @@ impl CPU {
         self.update_negative_flag(self.register_y & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
+    /// LSR - Logical Shift Right
+    ///
+    /// Shifts all bits of the accumulator register or memory to the right by one. Bit 7 is
+    /// set to 0 as a result and bit 0 is placed in the carry flag of the processor
+    /// status register. In effect, ASL divides the content of the accumulator
+    /// register by 2. Sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn lsr(&mut self, mode: &AddressingMode) {
+        let old_value: u8;
+        if matches!(mode, AddressingMode::Accumulator) {
+            old_value = self.register_a;
+            self.register_a >>= 1;
+            self.update_zero_flag(self.register_a == 0);
+        } else {
+            let addr = self.get_operand_address(mode);
+            old_value = self.mem_read(addr);
+            let new_val = old_value >> 1;
+            self.mem_write(addr, new_val);
+            self.update_zero_flag(new_val == 0);
+        }
+
+        // if the bit 7 is set to 0 always, then the negative flag will always
+        // be cleared
+        self.update_negative_flag(false);
+        // carry bit is set based on whether bit 0 was 1 or 0 in old_value
+        self.update_carry_flag(old_value & CARRY_BIT == CARRY_BIT);
+    }
+
     /// TAX - Transfer of Accumulator to X
     ///
     /// Copies the content of the accumulator register into the X register

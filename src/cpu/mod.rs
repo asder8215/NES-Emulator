@@ -184,7 +184,7 @@ impl CPU {
                     OpCodeName::LDA => self.lda(&opcode_struct.mode),
                     OpCodeName::LDX => self.ldx(&opcode_struct.mode),
                     OpCodeName::LDY => self.ldy(&opcode_struct.mode),
-                    OpCodeName::LSR => todo!(),
+                    OpCodeName::LSR => self.lsr(&opcode_struct.mode),
                     OpCodeName::NOP => {} // does nothing lol
                     OpCodeName::ORA => todo!(),
                     OpCodeName::PHA => todo!(),
