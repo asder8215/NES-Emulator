@@ -400,7 +400,7 @@ impl CPU {
     }
 
     /// PHA - Push Accumulator
-    /// 
+    ///
     /// Push a copy of the content in accumulator to the stack
     #[inline]
     pub(crate) fn pha(&mut self) {
@@ -409,7 +409,7 @@ impl CPU {
     }
 
     /// PHP - Push Processor Status
-    /// 
+    ///
     /// Push a copy of the content in processor status register to the stack
     #[inline]
     pub(crate) fn php(&mut self) {
@@ -418,7 +418,7 @@ impl CPU {
     }
 
     /// PLA - Pull Accumulator
-    /// 
+    ///
     /// Pulls an 8 bit value from the stack into the accumulator
     #[inline]
     pub(crate) fn pla(&mut self) {
@@ -429,7 +429,7 @@ impl CPU {
     }
 
     /// PLP - Pull Processor Status
-    /// 
+    ///
     /// Pulls an 8 bit value from the stack into the processor status
     #[inline]
     pub(crate) fn plp(&mut self) {
@@ -438,10 +438,10 @@ impl CPU {
     }
 
     /// ROL - Rotate Left
-    /// 
+    ///
     /// Moves the bit in either the accumulator register or value held in memory
-    /// to the left by 1. Bit 0 is filled with the current value of the carry flag 
-    /// and old bit 7 becomes the new carry flag value.
+    /// to the left by 1. Bit 0 is filled with the current value of the carry flag
+    /// and old bit 7 becomes the new carry flag value
     #[inline]
     pub(crate) fn rol(&mut self, mode: AddressingMode) {
         let old_value: u8;
@@ -463,10 +463,10 @@ impl CPU {
     }
 
     /// ROL - Rotate Right
-    /// 
+    ///
     /// Moves the bit in either the accumulator register or value held in memory
-    /// to the right by 1. Bit 0 is filled with the current value of the carry flag 
-    /// and old bit 7 becomes the new carry flag value.
+    /// to the right by 1. Bit 7 is filled with the current value of the carry flag
+    /// and old bit 0 becomes the new carry flag value
     #[inline]
     pub(crate) fn ror(&mut self, mode: AddressingMode) {
         let old_value: u8;
@@ -485,6 +485,24 @@ impl CPU {
         }
 
         self.update_carry_flag(old_value & CARRY_BIT == CARRY_BIT);
+    }
+
+    /// RTI - Return from Interrupt
+    ///
+    /// This instruction is used at the end of an interrupt processing routine.
+    /// It pulls the flags and program counter from the stack
+    #[inline]
+    pub(crate) fn rti(&mut self) {
+        // pulls for status flags
+        self.plp();
+
+        // pulls for program counter address
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        let lo = self.mem_read(STACK + self.stack_pointer as u16);
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        let hi = self.mem_read(STACK + self.stack_pointer as u16);
+
+        self.program_counter = (hi as u16) << 8 | (lo as u16);
     }
 
     /// TAX - Transfer of Accumulator to X

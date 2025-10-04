@@ -566,7 +566,7 @@ mod test {
     }
     // ===============
 
-    // == JMP TESTS ==
+    // == JSR TESTS ==
     #[test]
     fn test_jsr_1() {
         let mut cpu = CPU::new();
@@ -855,6 +855,25 @@ mod test {
         assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
         assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
         assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
+    }
+    // ===============
+
+    // == RTI TESTS ==
+    #[test]
+    fn test_rti_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x40, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x2021, 0x00);
+        cpu.mem_write(0x1FE, 0b1100_0011);
+        cpu.mem_write(0x1FF, 0x21);
+        cpu.mem_write(0x100, 0x20);
+        cpu.run();
+
+        assert_eq!(cpu.program_counter, 0x2021);
+        assert_eq!(cpu.stack_pointer, 0x00);
+        assert_eq!(cpu.status, 0b1100_0011);
     }
     // ===============
 
