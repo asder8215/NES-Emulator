@@ -948,6 +948,48 @@ mod test {
     }
     // ===============
 
+    // == STA TESTS ==
+    #[test]
+    fn test_sta_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x85, 0x21, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.mem_read(0x21), 0x55);
+    }
+    // ===============
+
+    // == STX TESTS ==
+    #[test]
+    fn test_stx_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x86, 0x21, 0x00]);
+        cpu.reset();
+        cpu.register_x = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.mem_read(0x21), 0x55);
+    }
+    // ===============
+
+    // == STY TESTS ==
+    #[test]
+    fn test_sty_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x84, 0x21, 0x00]);
+        cpu.reset();
+        cpu.register_y = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.mem_read(0x21), 0x55);
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {

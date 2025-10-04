@@ -560,6 +560,33 @@ impl CPU {
         self.update_interrupt_flag(true);
     }
 
+    /// STA - Store Accumulator
+    ///
+    /// Stores the content of accumulator into memory
+    #[inline]
+    pub(crate) fn sta(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_a);
+    }
+
+    /// STX - Store X Register
+    ///
+    /// Stores the content of register x into memory
+    #[inline]
+    pub(crate) fn stx(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_x);
+    }
+
+    /// STY - Store Y Register
+    ///
+    /// Stores the content of register y into memory
+    #[inline]
+    pub(crate) fn sty(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_y);
+    }
+
     /// TAX - Transfer of Accumulator to X
     ///
     /// Copies the content of the accumulator register into the X register
