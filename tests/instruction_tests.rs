@@ -892,6 +892,28 @@ mod test {
     }
     // ===============
 
+    // == SBC TESTS ==
+    #[test]
+    fn test_sbc_carry_out_and_no_overflow() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xE9, 0x20, 0x00]);
+        cpu.reset();
+
+        cpu.register_a = 0x50;
+        cpu.status = 0b0000_0001;
+
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 0x30);
+        assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
+        assert!(!cpu.is_status_flag_set(ProcessorStatus::Overflow));
+        assert!(!cpu.is_status_flag_set(ProcessorStatus::Zero));
+        assert!(!cpu.is_status_flag_set(ProcessorStatus::Negative));
+    }
+    // ===============
+
+    
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {

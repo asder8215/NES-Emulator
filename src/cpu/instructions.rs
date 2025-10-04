@@ -520,6 +520,22 @@ impl CPU {
         self.program_counter = ((hi as u16) << 8 | (lo as u16)).wrapping_add(1);
     }
 
+    /// SBC - Subtract with Carry
+    ///
+    /// Subtracts the content of memory to the accumulator together with the not carry bit.
+    /// If overflow occurs, the carry bit is cleared, which allows for multiple byte subtraction
+    /// to be performed
+    ///
+    /// Note: This is effectively the same as doing an ADC where the value held in memory is
+    /// notted/1's complemented.
+    #[inline]
+    pub(crate) fn sbc(&mut self, mode: AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, !self.mem_read(addr));
+
+        self.adc(mode);
+    }
+
     /// TAX - Transfer of Accumulator to X
     ///
     /// Copies the content of the accumulator register into the X register
