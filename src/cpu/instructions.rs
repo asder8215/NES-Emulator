@@ -505,6 +505,21 @@ impl CPU {
         self.program_counter = (hi as u16) << 8 | (lo as u16);
     }
 
+    /// RTS - Return from Subroutine
+    ///
+    /// This instruction is used at the end of a subroutine to return back to the
+    /// calling routine. It pulls the PC (minus one) from the stack
+    #[inline]
+    pub(crate) fn rts(&mut self) {
+        // pulls for program counter address
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        let lo = self.mem_read(STACK + self.stack_pointer as u16);
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        let hi = self.mem_read(STACK + self.stack_pointer as u16);
+
+        self.program_counter = ((hi as u16) << 8 | (lo as u16)).wrapping_add(1);
+    }
+
     /// TAX - Transfer of Accumulator to X
     ///
     /// Copies the content of the accumulator register into the X register

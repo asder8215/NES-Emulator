@@ -877,6 +877,21 @@ mod test {
     }
     // ===============
 
+    // == RTS TESTS ==
+    #[test]
+    fn test_rts_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x20, 0x21, 0x20, 0x00]);
+        cpu.reset();
+        cpu.mem_write(0x2021, 0x60);
+        cpu.run();
+
+        assert_eq!(cpu.program_counter, 0x8003);
+        assert_eq!(cpu.stack_pointer, 0xFD);
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {

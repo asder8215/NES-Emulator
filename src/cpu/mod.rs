@@ -194,7 +194,7 @@ impl CPU {
                     OpCodeName::ROL => self.rol(opcode_struct.mode),
                     OpCodeName::ROR => self.ror(opcode_struct.mode),
                     OpCodeName::RTI => self.rti(),
-                    OpCodeName::RTS => todo!(),
+                    OpCodeName::RTS => self.rts(),
                     OpCodeName::SBC => todo!(),
                     OpCodeName::SEC => todo!(),
                     OpCodeName::SED => todo!(),
