@@ -597,4 +597,56 @@ impl CPU {
         self.update_zero_flag(self.register_x == 0);
         self.update_negative_flag(self.register_x & NEGATIVE_BIT == NEGATIVE_BIT);
     }
+
+    /// TAY - Transfer of Accumulator to Y
+    ///
+    /// Copies the content of the accumulator register into the Y register
+    /// and sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn tay(&mut self) {
+        self.register_y = self.register_a;
+        self.update_zero_flag(self.register_y == 0);
+        self.update_negative_flag(self.register_y & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// TSX - Transfer Stack Pointer to X
+    ///
+    /// Copies the content of the stack pointer register into the X register
+    /// and sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn tsx(&mut self) {
+        self.register_x = self.stack_pointer;
+        self.update_zero_flag(self.register_x == 0);
+        self.update_negative_flag(self.register_x & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// TXA - Transfer X to Accumulator
+    ///
+    /// Copies the content of the X register into the accumulator register
+    /// and sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn txa(&mut self) {
+        self.register_a = self.register_x;
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// TXS - Transfer X to Stack Pointer
+    ///
+    /// Copies the content of the X register into the stack pointer register
+    #[inline]
+    pub(crate) fn txs(&mut self) {
+        self.stack_pointer = self.register_x;
+    }
+
+    /// TYA - Transfer Y to Accumulator
+    ///
+    /// Copies the content of the Y register into the accumulator register
+    /// and sets the zero and negative flag as appropriate
+    #[inline]
+    pub(crate) fn tya(&mut self) {
+        self.register_a = self.register_y;
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
 }

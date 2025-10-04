@@ -990,6 +990,90 @@ mod test {
     }
     // ===============
 
+    // == TAX TESTS ==
+    #[test]
+    fn test_tax_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xAA, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.register_x, 0x55);
+    }
+    // ===============
+
+    // == TAY TESTS ==
+    #[test]
+    fn test_tay_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xA8, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.register_y, 0x55);
+    }
+    // ===============
+
+    // == TSX TESTS ==
+    #[test]
+    fn test_tsx_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xBA, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert_eq!(cpu.register_x, 0xfd);
+    }
+    // ===============
+
+    // == TXA TESTS ==
+    #[test]
+    fn test_txa_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x8A, 0x00]);
+        cpu.reset();
+        cpu.register_x = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 0x55);
+    }
+    // ===============
+
+    // == TXS TESTS ==
+    #[test]
+    fn test_txs_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x9A, 0x48, 0x00]);
+        cpu.reset();
+        cpu.register_a = 0x55;
+        cpu.register_x = 0x69;
+        cpu.run();
+
+        assert_eq!(cpu.mem_read(0x169), 0x55);
+    }
+    // ===============
+
+    // == TYA TESTS ==
+    #[test]
+    fn test_tya_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x98, 0x00]);
+        cpu.reset();
+        cpu.register_y = 0x55;
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 0x55);
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {

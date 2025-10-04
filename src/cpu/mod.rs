@@ -203,11 +203,11 @@ impl CPU {
                     OpCodeName::STX => self.stx(opcode_struct.mode),
                     OpCodeName::STY => self.sty(opcode_struct.mode),
                     OpCodeName::TAX => self.tax(),
-                    OpCodeName::TAY => todo!(),
-                    OpCodeName::TSX => todo!(),
-                    OpCodeName::TXA => todo!(),
-                    OpCodeName::TXS => todo!(),
-                    OpCodeName::TYA => todo!(),
+                    OpCodeName::TAY => self.tay(),
+                    OpCodeName::TSX => self.tsx(),
+                    OpCodeName::TXA => self.txa(),
+                    OpCodeName::TXS => self.txs(),
+                    OpCodeName::TYA => self.tya(),
                 }
                 // move PC to the next instruction to process
                 self.program_counter = self
