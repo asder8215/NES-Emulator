@@ -913,7 +913,41 @@ mod test {
     }
     // ===============
 
-    
+    // == SET TESTS ==
+    #[test]
+    fn test_sec_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x38, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(ProcessorStatus::Carry));
+    }
+
+    #[test]
+    fn test_sed_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0xF8, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(ProcessorStatus::Decimal));
+    }
+
+    #[test]
+    fn test_sei_1() {
+        let mut cpu = CPU::new();
+
+        cpu.load(&[0x78, 0x00]);
+        cpu.reset();
+        cpu.run();
+
+        assert!(cpu.is_status_flag_set(ProcessorStatus::InterruptDisable));
+    }
+    // ===============
+
     // LDA, TAX, INX, TESTS
     #[test]
     fn test_5_ops_working_together() {

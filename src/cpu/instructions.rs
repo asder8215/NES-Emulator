@@ -536,6 +536,30 @@ impl CPU {
         self.adc(mode);
     }
 
+    /// SEC - Set Carry Flag
+    ///
+    /// Sets the carry flag to 1
+    #[inline]
+    pub(crate) fn sec(&mut self) {
+        self.update_carry_flag(true);
+    }
+
+    /// SED - Set Decimal Flag
+    ///
+    /// Sets the decimal flag to 1
+    #[inline]
+    pub(crate) fn sed(&mut self) {
+        self.update_decimal_flag(true);
+    }
+
+    /// SEI - Set Interrupt Disable
+    ///
+    /// Sets the carry flag to 1
+    #[inline]
+    pub(crate) fn sei(&mut self) {
+        self.update_interrupt_flag(true);
+    }
+
     /// TAX - Transfer of Accumulator to X
     ///
     /// Copies the content of the accumulator register into the X register
