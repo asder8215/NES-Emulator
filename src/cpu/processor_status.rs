@@ -33,6 +33,7 @@ pub(crate) const NEGATIVE_BIT: u8 = 0b1000_0000;
 /// See: https://www.nesdev.org/wiki/Status_flags
 ///
 /// For more details on what each processor status means
+#[derive(Debug, Clone, Copy)]
 pub enum ProcessorStatus {
     Carry,
     Zero,
@@ -51,7 +52,7 @@ pub enum ProcessorStatus {
 impl CPU {
     /// Checks if a specific processor status flag is set
     #[inline]
-    pub fn is_status_flag_set(&self, flag: &ProcessorStatus) -> bool {
+    pub fn is_status_flag_set(&self, flag: ProcessorStatus) -> bool {
         match flag {
             ProcessorStatus::Carry => self.status & CARRY_BIT == 1,
             ProcessorStatus::Zero => self.status & ZERO_BIT == 0b10,
@@ -69,9 +70,9 @@ impl CPU {
     #[inline]
     pub(crate) fn update_carry_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0000_0001;
+            self.status |= CARRY_BIT;
         } else {
-            self.status &= 0b1111_1110;
+            self.status &= !CARRY_BIT;
         }
     }
 
@@ -79,9 +80,9 @@ impl CPU {
     #[inline]
     pub(crate) fn update_zero_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0000_0010;
+            self.status |= ZERO_BIT;
         } else {
-            self.status &= 0b1111_1101;
+            self.status &= !ZERO_BIT;
         }
     }
 
@@ -89,9 +90,9 @@ impl CPU {
     #[inline]
     pub(crate) fn update_interrupt_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0000_0100;
+            self.status |= INTERRUPT_DISABLE_BIT;
         } else {
-            self.status &= 0b1111_1011;
+            self.status &= !INTERRUPT_DISABLE_BIT;
         }
     }
 
@@ -99,9 +100,9 @@ impl CPU {
     #[inline]
     pub(crate) fn update_decimal_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0000_1000;
+            self.status |= DECIMAL_BIT;
         } else {
-            self.status &= 0b1111_0111;
+            self.status &= !DECIMAL_BIT;
         }
     }
 
@@ -109,9 +110,9 @@ impl CPU {
     #[inline]
     pub(crate) fn update_overflow_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b0100_0000;
+            self.status |= OVERFLOW_BIT;
         } else {
-            self.status &= 0b1011_1111;
+            self.status &= !OVERFLOW_BIT;
         }
     }
 
@@ -119,9 +120,9 @@ impl CPU {
     #[inline]
     pub(crate) fn update_negative_flag(&mut self, condition: bool) {
         if condition {
-            self.status |= 0b1000_0000;
+            self.status |= NEGATIVE_BIT;
         } else {
-            self.status &= 0b0111_1111;
+            self.status &= !NEGATIVE_BIT;
         }
     }
 }

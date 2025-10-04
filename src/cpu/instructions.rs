@@ -127,7 +127,7 @@ impl CPU {
     ///
     /// Clears a specific processor status flag
     #[inline]
-    pub(crate) fn clear(&mut self, status: &ProcessorStatus) {
+    pub(crate) fn clear(&mut self, status: ProcessorStatus) {
         match status {
             ProcessorStatus::Carry => self.update_carry_flag(false),
             ProcessorStatus::Zero => unreachable!(),
@@ -435,6 +435,56 @@ impl CPU {
     pub(crate) fn plp(&mut self) {
         self.stack_pointer = self.stack_pointer.wrapping_add(1);
         self.status = self.mem_read(STACK + self.stack_pointer as u16);
+    }
+
+    /// ROL - Rotate Left
+    /// 
+    /// Moves the bit in either the accumulator register or value held in memory
+    /// to the left by 1. Bit 0 is filled with the current value of the carry flag 
+    /// and old bit 7 becomes the new carry flag value.
+    #[inline]
+    pub(crate) fn rol(&mut self, mode: AddressingMode) {
+        let old_value: u8;
+        if matches!(mode, AddressingMode::Accumulator) {
+            old_value = self.register_a;
+            self.register_a = self.register_a << 1 | (self.status & CARRY_BIT);
+            self.update_zero_flag(self.register_a == 0);
+            self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
+        } else {
+            let addr = self.get_operand_address(mode);
+            old_value = self.mem_read(addr);
+            let new_val = old_value << 1 | (self.status & CARRY_BIT);
+            self.mem_write(addr, new_val);
+            self.update_zero_flag(new_val == 0);
+            self.update_negative_flag(new_val & NEGATIVE_BIT == NEGATIVE_BIT);
+        }
+
+        self.update_carry_flag(old_value & NEGATIVE_BIT == NEGATIVE_BIT);
+    }
+
+    /// ROL - Rotate Right
+    /// 
+    /// Moves the bit in either the accumulator register or value held in memory
+    /// to the right by 1. Bit 0 is filled with the current value of the carry flag 
+    /// and old bit 7 becomes the new carry flag value.
+    #[inline]
+    pub(crate) fn ror(&mut self, mode: AddressingMode) {
+        let old_value: u8;
+        if matches!(mode, AddressingMode::Accumulator) {
+            old_value = self.register_a;
+            self.register_a = (self.register_a >> 1) | ((self.status & CARRY_BIT) << 7);
+            self.update_zero_flag(self.register_a == 0);
+            self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
+        } else {
+            let addr = self.get_operand_address(mode);
+            old_value = self.mem_read(addr);
+            let new_val = (old_value >> 1) | ((self.status & CARRY_BIT) << 7);
+            self.mem_write(addr, new_val);
+            self.update_zero_flag(new_val == 0);
+            self.update_negative_flag(new_val & NEGATIVE_BIT == NEGATIVE_BIT);
+        }
+
+        self.update_carry_flag(old_value & CARRY_BIT == CARRY_BIT);
     }
 
     /// TAX - Transfer of Accumulator to X
