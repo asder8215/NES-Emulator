@@ -31,15 +31,16 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
+        let old_val = self.register_a;
         self.register_a = self
             .register_a
             .wrapping_add(value)
             .wrapping_add(self.status & CARRY_BIT);
 
-        self.update_overflow_flag(
-            (self.status & CARRY_BIT == CARRY_BIT) != (self.register_a <= value),
+        self.update_overflow_flag(((!(old_val ^ value) & (old_val ^ self.register_a)) & 0x80) != 0);
+        self.update_carry_flag(
+            (old_val as u16 + value as u16 + (self.status & CARRY_BIT) as u16) > 0xFF,
         );
-        self.update_carry_flag(self.register_a <= value);
         self.update_zero_flag(self.register_a == 0);
         self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
@@ -302,7 +303,7 @@ impl CPU {
         // addr to the last byte before viewing the next instruction
         // inside the parent region of code).
         let next_ins = self.program_counter.wrapping_add(1);
-        let (msb_byte, lsb_byte) = ((next_ins >> 8) as u8, next_ins as u8);
+        let (msb_byte, lsb_byte) = ((next_ins >> 8) as u8, (next_ins & 0xff) as u8);
 
         // we do two separate writes to the STACK because we want to only
         // write within the STACK region 0x100 - 0x1FF inclusive (do not touch
@@ -369,17 +370,19 @@ impl CPU {
             old_value = self.register_a;
             self.register_a >>= 1;
             self.update_zero_flag(self.register_a == 0);
+            self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
         } else {
             let addr = self.get_operand_address(mode);
             old_value = self.mem_read(addr);
             let new_val = old_value >> 1;
             self.mem_write(addr, new_val);
             self.update_zero_flag(new_val == 0);
+            self.update_negative_flag(new_val & NEGATIVE_BIT == NEGATIVE_BIT);
         }
 
         // if the bit 7 is set to 0 always, then the negative flag will always
         // be cleared
-        self.update_negative_flag(false);
+        // self.update_negative_flag(false);
         // carry bit is set based on whether bit 0 was 1 or 0 in old_value
         self.update_carry_flag(old_value & CARRY_BIT == CARRY_BIT);
     }
@@ -531,9 +534,16 @@ impl CPU {
     #[inline]
     pub(crate) fn sbc(&mut self, mode: AddressingMode) {
         let addr = self.get_operand_address(mode);
-        self.mem_write(addr, !self.mem_read(addr));
+        let value = self.mem_read(addr) ^ 0xFF; // 1's complement
+        let sum = self.register_a as u16 + value as u16 + (self.status & CARRY_BIT) as u16;
+        self.register_a = sum as u8;
 
-        self.adc(mode);
+        self.update_carry_flag(sum > 0xFF);
+        self.update_overflow_flag(
+            ((!(self.register_a ^ value as u8) & (self.register_a ^ sum as u8)) & 0x80) != 0,
+        );
+        self.update_zero_flag(self.register_a == 0);
+        self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
     }
 
     /// SEC - Set Carry Flag

@@ -89,6 +89,15 @@ impl CPU {
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 
+    #[doc(hidden)]
+    #[inline]
+    pub fn test_load(&mut self, program: &[u8]) {
+        self.memory[0x0600..(0x0600 + program.len())].copy_from_slice(program);
+        self.mem_write_u16(0xFFFC, 0x0600);
+    }
+
+    /// Loads the program into memory, reset all registers and PC to default state,
+    /// and runs instruction in the ROM
     #[inline]
     pub fn load_and_run(&mut self, program: &[u8]) {
         self.load(program);
@@ -105,7 +114,6 @@ impl CPU {
         loop {
             let opcode = self.mem_read(self.program_counter);
             self.program_counter = self.program_counter.wrapping_add(1);
-
             if let Some(opcode_struct) = OpCode::get(opcode) {
                 match opcode_struct.mnemonic {
                     OpCodeName::ADC => self.adc(opcode_struct.mode),
@@ -219,6 +227,142 @@ impl CPU {
                     opcode, self.program_counter
                 )
             }
+        }
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn test_run(&mut self) {
+        self.test_run_with_callback(|_| {});
+    }
+
+    #[doc(hidden)]
+    #[inline]
+    pub fn test_run_with_callback<F>(&mut self, mut callback: F)
+    where
+        F: FnMut(&mut CPU),
+    {
+        loop {
+            let opcode = self.mem_read(self.program_counter);
+            self.program_counter = self.program_counter.wrapping_add(1);
+            // println!(
+            //     "Reading instruction: {:#x} with PC at: {:#x}",
+            //     opcode, self.program_counter
+            // );
+            if let Some(opcode_struct) = OpCode::get(opcode) {
+                match opcode_struct.mnemonic {
+                    OpCodeName::ADC => self.adc(opcode_struct.mode),
+                    OpCodeName::AND => self.and(opcode_struct.mode),
+                    OpCodeName::ASL => self.asl(opcode_struct.mode),
+                    OpCodeName::BCC => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Carry),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BCS => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Carry),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BEQ => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BIT => self.bit(opcode_struct.mode),
+                    OpCodeName::BMI => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BNE => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Zero),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BPL => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Negative),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BRK => {
+                        // By technicality on 6502, the PC should not be incremented
+                        // when a BRK instruction is reached. Since I don't want
+                        // to rewrite this code to have incrementation occur everywhere
+                        // except BRK, I'll just decrement the PC by 1 here.
+                        self.program_counter = self.program_counter.wrapping_sub(1);
+                        return;
+                    }
+                    OpCodeName::BVC => self.branch(
+                        !self.is_status_flag_set(processor_status::ProcessorStatus::Overflow),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::BVS => self.branch(
+                        self.is_status_flag_set(processor_status::ProcessorStatus::Overflow),
+                        opcode_struct.mode,
+                    ),
+                    OpCodeName::CLC => self.clear(processor_status::ProcessorStatus::Carry),
+                    OpCodeName::CLD => self.clear(processor_status::ProcessorStatus::Decimal),
+                    OpCodeName::CLI => {
+                        self.clear(processor_status::ProcessorStatus::InterruptDisable)
+                    }
+                    OpCodeName::CLV => self.clear(processor_status::ProcessorStatus::Overflow),
+                    OpCodeName::CMP => self.cmp(opcode_struct.mode),
+                    OpCodeName::CPX => self.cpx(opcode_struct.mode),
+                    OpCodeName::CPY => self.cpy(opcode_struct.mode),
+                    OpCodeName::DEC => self.dec(opcode_struct.mode),
+                    OpCodeName::DEX => self.dex(),
+                    OpCodeName::DEY => self.dey(),
+                    OpCodeName::EOR => self.eor(opcode_struct.mode),
+                    OpCodeName::INC => self.inc(opcode_struct.mode),
+                    OpCodeName::INX => self.inx(),
+                    OpCodeName::INY => self.iny(),
+                    OpCodeName::JMP => {
+                        self.jmp(opcode_struct.mode);
+                        // the reason why we continue is bc
+                        // jump instructions are not *relative*
+                        // to the next instruction, so we do not
+                        // add the opcode_struct.len() - 1 bytes
+                        // to the PC
+                        continue;
+                    }
+                    OpCodeName::JSR => {
+                        self.jsr(opcode_struct.mode);
+                        continue;
+                    }
+                    OpCodeName::LDA => self.lda(opcode_struct.mode),
+                    OpCodeName::LDX => self.ldx(opcode_struct.mode),
+                    OpCodeName::LDY => self.ldy(opcode_struct.mode),
+                    OpCodeName::LSR => self.lsr(opcode_struct.mode),
+                    OpCodeName::NOP => {} // does nothing lol
+                    OpCodeName::ORA => self.ora(opcode_struct.mode),
+                    OpCodeName::PHA => self.pha(),
+                    OpCodeName::PHP => self.php(),
+                    OpCodeName::PLA => self.pla(),
+                    OpCodeName::PLP => self.plp(),
+                    OpCodeName::ROL => self.rol(opcode_struct.mode),
+                    OpCodeName::ROR => self.ror(opcode_struct.mode),
+                    OpCodeName::RTI => self.rti(),
+                    OpCodeName::RTS => self.rts(),
+                    OpCodeName::SBC => self.sbc(opcode_struct.mode),
+                    OpCodeName::SEC => self.sec(),
+                    OpCodeName::SED => self.sed(),
+                    OpCodeName::SEI => self.sei(),
+                    OpCodeName::STA => self.sta(opcode_struct.mode),
+                    OpCodeName::STX => self.stx(opcode_struct.mode),
+                    OpCodeName::STY => self.sty(opcode_struct.mode),
+                    OpCodeName::TAX => self.tax(),
+                    OpCodeName::TAY => self.tay(),
+                    OpCodeName::TSX => self.tsx(),
+                    OpCodeName::TXA => self.txa(),
+                    OpCodeName::TXS => self.txs(),
+                    OpCodeName::TYA => self.tya(),
+                }
+                // move PC to the next instruction to process
+                self.program_counter = self
+                    .program_counter
+                    .wrapping_add((opcode_struct.len - 1) as u16);
+            } else {
+                panic!(
+                    "Illegal instruction {} reached at address {:#x}",
+                    opcode, self.program_counter
+                )
+            }
+            callback(self);
         }
     }
 }

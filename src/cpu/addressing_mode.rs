@@ -51,9 +51,15 @@ impl CPU {
                 pos.wrapping_add(self.register_y) as u16
             }
             AddressingMode::Relative => {
-                let addr = self.mem_read(self.program_counter) as u16;
-                // Is overflow something that a branch instruction do?
-                self.program_counter.wrapping_add(addr)
+                // Important to interpret this input as an i8 because a branch instruction
+                // is relative to the current position of the program counter
+                // if you're doing a for loop or a while loop, you're moving the PC
+                // back a certain amount of position
+                let addr = self.mem_read(self.program_counter) as i8;
+
+                // casting a i8 -> u16 keeps the signed offset of negative values (i.e. -16i8 -> 65520 in u16
+                // whille -16i8 in u8 is 240u8 -> 240 in u16)
+                self.program_counter.wrapping_add(addr as u16)
             }
             AddressingMode::Absolute => self.mem_read_u16(self.program_counter),
             AddressingMode::AbsoluteX => {
@@ -76,15 +82,22 @@ impl CPU {
                 // the target addr is located with base + register x
                 // (points to the LSB byte of the addr)
                 let ptr = base.wrapping_add(self.register_x);
-                self.mem_read_u16(ptr as u16)
+
+                // Note the follow is NOT the same as a mem_read_u16 because
+                // we are allowing wrapping add on a ptr that is a u8 which is
+                // then transformed into a u16 value
+                let lo = self.mem_read(ptr as u16);
+                let hi = self.mem_read(ptr.wrapping_add(1) as u16);
+                (hi as u16) << 8 | (lo as u16)
             }
             AddressingMode::IndirectY => {
                 // contains an 8 bit address that points to a 16 bit address in memory
                 let base = self.mem_read(self.program_counter);
-                // grab the 16 bit addr
-                let pos = self.mem_read_u16(base as u16);
+                let lo = self.mem_read(base as u16);
+                let hi = self.mem_read((base).wrapping_add(1) as u16);
+                let deref_base = (hi as u16) << 8 | (lo as u16);
                 // add with register y to fetch the target address
-                pos.wrapping_add(self.register_y as u16)
+                deref_base.wrapping_add(self.register_y as u16)
             }
         }
     }
