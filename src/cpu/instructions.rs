@@ -540,7 +540,7 @@ impl CPU {
 
         self.update_carry_flag(sum > 0xFF);
         self.update_overflow_flag(
-            ((!(self.register_a ^ value as u8) & (self.register_a ^ sum as u8)) & 0x80) != 0,
+            ((!(self.register_a ^ value) & (self.register_a ^ sum as u8)) & 0x80) != 0,
         );
         self.update_zero_flag(self.register_a == 0);
         self.update_negative_flag(self.register_a & NEGATIVE_BIT == NEGATIVE_BIT);
