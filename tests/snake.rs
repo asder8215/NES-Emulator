@@ -67,7 +67,6 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
     }
 }
 
-
 /// Interprets the color of a pixel (represented as 1 byte)
 /// in memory
 fn color(byte: u8) -> Color {
