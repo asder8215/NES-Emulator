@@ -89,7 +89,7 @@ impl CPU {
     pub fn load(&mut self, program: &[u8]) {
         // self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(program);
         for i in 0..(program.len() as u16) {
-            self.mem_write(0x0000 + i, program[i as usize]);
+            self.mem_write(i, program[i as usize]);
         }
         // self.mem_write_u16(0xFFFC, 0x0000);
         unsafe {

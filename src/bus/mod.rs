@@ -16,6 +16,12 @@ pub struct Bus {
     cpu_vram: [u8; 2048],
 }
 
+impl Default for Bus {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Bus {
     pub fn new() -> Self {
         Self {
@@ -44,7 +50,7 @@ impl Mem for Bus {
                 todo!("Need to implement PPU first before working on this");
             }
             _ => {
-                println!("Can't perform mem access for {} yet", addr);
+                println!("Can't perform mem access for {addr} yet");
                 0
             }
         }
@@ -61,7 +67,7 @@ impl Mem for Bus {
                 todo!("Need to implement PPU first before working on this");
             }
             _ => {
-                println!("Can't perform mem write for {} yet", addr);
+                println!("Can't perform mem write for {addr} yet");
             }
         }
     }
