@@ -2,7 +2,8 @@
 //! use and provides a method to returning the target address that
 //! the op code retrieves a value from
 
-use super::{CPU, mem::Mem};
+use super::CPU;
+use crate::Mem;
 
 #[derive(Debug, Copy, Clone)]
 /// See https://www.nesdev.org/obelisk-6502-guide/addressing.html#IMP

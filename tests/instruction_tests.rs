@@ -5,8 +5,8 @@
 
 #[cfg(test)]
 mod test {
-    use nes_emulator::cpu::{CPU, mem::Mem, processor_status::ProcessorStatus};
-
+    use nes_emulator::Mem;
+    use nes_emulator::cpu::{CPU, processor_status::ProcessorStatus};
     // == ADC TESTS ==
     #[test]
     fn test_adc_no_carry_out_and_no_overflow() {
@@ -210,13 +210,13 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0x90, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -224,7 +224,7 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0xB0, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
 
         cpu.status |= 0x01;
@@ -233,7 +233,7 @@ mod test {
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -241,14 +241,14 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0xF0, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.status |= 0b10;
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -256,14 +256,14 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0x30, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.status |= 0b1000_0000;
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -271,13 +271,13 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0xD0, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -285,13 +285,13 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0x10, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -299,13 +299,13 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0x50, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
 
     #[test]
@@ -313,14 +313,14 @@ mod test {
         let mut cpu = CPU::new();
 
         cpu.load(&[0x90, 0x50]);
-        cpu.mem_write(0x8052, 0x00);
+        cpu.mem_write(0x0052, 0x00);
         cpu.reset();
         cpu.status |= 0b0100_0000;
         cpu.run();
 
         // this should be the last address read before it
         // returns
-        assert_eq!(cpu.program_counter, 0x8052);
+        assert_eq!(cpu.program_counter, 0x0052);
     }
     // ===============
 
@@ -557,12 +557,12 @@ mod test {
     fn test_jmp_1() {
         let mut cpu = CPU::new();
 
-        cpu.load(&[0x4C, 0x21, 0x20]);
+        cpu.load(&[0x4C, 0x66, 0x16]);
         cpu.reset();
-        cpu.mem_write(0x2021, 0x00);
+        cpu.mem_write(0x1666, 0x00);
         cpu.run();
 
-        assert_eq!(cpu.program_counter, 0x2021);
+        assert_eq!(cpu.program_counter, 0x1666);
     }
     // ===============
 
@@ -571,14 +571,14 @@ mod test {
     fn test_jsr_1() {
         let mut cpu = CPU::new();
 
-        cpu.load(&[0x20, 0x21, 0x20]);
+        cpu.load(&[0x20, 0x66, 0x16]);
         cpu.reset();
-        cpu.mem_write(0x2021, 0x00);
+        cpu.mem_write(0x1666, 0x00);
         cpu.run();
 
-        assert_eq!(cpu.program_counter, 0x2021);
+        assert_eq!(cpu.program_counter, 0x1666);
         assert_eq!(cpu.stack_pointer, 0xFB);
-        assert_eq!(cpu.mem_read(0x1FD), 0x80);
+        assert_eq!(cpu.mem_read(0x1FD), 0x00);
         assert_eq!(cpu.mem_read(0x1FC), 0x02);
     }
     // ===============
@@ -865,13 +865,13 @@ mod test {
 
         cpu.load(&[0x40, 0x00]);
         cpu.reset();
-        cpu.mem_write(0x2021, 0x00);
+        cpu.mem_write(0x1666, 0x00);
         cpu.mem_write(0x1FE, 0b1100_0011);
-        cpu.mem_write(0x1FF, 0x21);
-        cpu.mem_write(0x100, 0x20);
+        cpu.mem_write(0x1FF, 0x66);
+        cpu.mem_write(0x100, 0x16);
         cpu.run();
 
-        assert_eq!(cpu.program_counter, 0x2021);
+        assert_eq!(cpu.program_counter, 0x1666);
         assert_eq!(cpu.stack_pointer, 0x00);
         assert_eq!(cpu.status, 0b1100_0011);
     }
@@ -882,12 +882,12 @@ mod test {
     fn test_rts_1() {
         let mut cpu = CPU::new();
 
-        cpu.load(&[0x20, 0x21, 0x20, 0x00]);
+        cpu.load(&[0x20, 0x66, 0x16, 0x00]);
         cpu.reset();
-        cpu.mem_write(0x2021, 0x60);
+        cpu.mem_write(0x1666, 0x60);
         cpu.run();
 
-        assert_eq!(cpu.program_counter, 0x8003);
+        assert_eq!(cpu.program_counter, 0x0003);
         assert_eq!(cpu.stack_pointer, 0xFD);
     }
     // ===============

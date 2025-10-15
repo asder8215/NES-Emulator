@@ -1,5 +1,5 @@
+use nes_emulator::Mem;
 use nes_emulator::cpu::CPU;
-use nes_emulator::cpu::mem::Mem;
 use rand::Rng;
 use sdl2::EventPump;
 use sdl2::event::Event;
@@ -190,7 +190,7 @@ fn snake_test() {
             canvas.present();
         }
 
-        // introduce a 70000 ns delay so that the game doesn't run too fastc
-        ::std::thread::sleep(std::time::Duration::new(0, 70_000));
+        // introduce a 70000 ns delay so that the game doesn't run too fast
+        ::std::thread::sleep(std::time::Duration::new(0, 1_000));
     });
 }

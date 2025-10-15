@@ -7,7 +7,8 @@ use crate::cpu::{
     processor_status::{CARRY_BIT, NEGATIVE_BIT, OVERFLOW_BIT, ProcessorStatus},
 };
 
-use super::{CPU, addressing_mode::AddressingMode, mem::Mem};
+use super::{CPU, addressing_mode::AddressingMode};
+use crate::Mem;
 
 impl CPU {
     /// ADC - Add with Carry

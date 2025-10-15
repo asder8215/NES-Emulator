@@ -3,17 +3,22 @@
 
 pub mod addressing_mode;
 pub mod instructions;
-pub mod mem;
 pub mod opcodes;
 pub mod processor_status;
 
-use mem::Mem;
+use crate::Mem;
+use crate::bus::Bus;
 use opcodes::{OpCode, OpCodeName};
 
 /// The stack pointer offsets from this
 /// base address
 const STACK: u16 = 0x100;
 const STACK_RESET: u8 = 0xfd;
+
+/// temp static variable to initialize PC for now
+/// (TODO: need to change this to fetching initial PC from
+/// reset addr 0xFFFC)
+static mut PC_INIT: u16 = 0x0000;
 
 pub struct CPU {
     /// accumulator CPU register
@@ -28,13 +33,8 @@ pub struct CPU {
     pub status: u8,
     /// the pc (keeps track of our curr pos in the program)
     pub program_counter: u16,
-    /// contains the CPU's Memory Map
-    /// * RAM - [0x0000 ... 0x2000]
-    /// * PPU, APU, GamePads, etc: [0x4020 ... 0x6000]
-    /// * Special storage for cartridges: [0x4020 ... 0x6000]
-    /// * RAM Space for Cartridge: [0x6000 ... 0x8000]
-    /// * PRG ROM: [0x8000 ... 0xFFFF]
-    pub(crate) memory: [u8; 0xFFFF],
+    /// the bus to read and write data from
+    pub bus: Bus,
 }
 
 impl Default for CPU {
@@ -53,7 +53,8 @@ impl CPU {
             stack_pointer: STACK_RESET,
             status: 0b10_0100, // decimal and interrupt disable flag is turned on
             program_counter: 0,
-            memory: [0; 0xFFFF],
+            // memory: [0; 0xFFFF],
+            bus: Bus::new(),
         }
     }
 
@@ -70,7 +71,8 @@ impl CPU {
         self.stack_pointer = STACK_RESET;
         self.status = 0b10_0100;
 
-        self.program_counter = self.mem_read_u16(0xFFFC);
+        // self.program_counter = self.mem_read_u16(0xFFFC);
+        self.program_counter = unsafe { PC_INIT };
     }
 
     /// Copies the program data into Program ROM (PRG ROM) space of memory.
@@ -85,15 +87,25 @@ impl CPU {
     /// reading from 0x8000 again.
     #[inline]
     pub fn load(&mut self, program: &[u8]) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(program);
-        self.mem_write_u16(0xFFFC, 0x8000);
+        // self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(program);
+        for i in 0..(program.len() as u16) {
+            self.mem_write(0x0000 + i, program[i as usize]);
+        }
+        // self.mem_write_u16(0xFFFC, 0x0000);
+        unsafe {
+            PC_INIT = 0x0000;
+        }
     }
 
     #[doc(hidden)]
     #[inline]
     pub fn test_load(&mut self, program: &[u8]) {
-        self.memory[0x0600..(0x0600 + program.len())].copy_from_slice(program);
-        self.mem_write_u16(0xFFFC, 0x0600);
+        // self.memory[0x0600..(0x0600 + program.len())].copy_from_slice(program);
+        for i in 0..(program.len() as u16) {
+            self.mem_write(0x0600 + i, program[i as usize]);
+        }
+        // self.mem_write_u16(0xFFFC, 0x0600);
+        unsafe { PC_INIT = 0x0600 };
     }
 
     /// Loads the program into memory, reset all registers and PC to default state,
@@ -364,5 +376,27 @@ impl CPU {
             }
             callback(self);
         }
+    }
+}
+
+impl Mem for CPU {
+    #[inline]
+    fn mem_read(&self, addr: u16) -> u8 {
+        self.bus.mem_read(addr)
+    }
+
+    #[inline]
+    fn mem_write(&mut self, addr: u16, data: u8) {
+        self.bus.mem_write(addr, data)
+    }
+
+    #[inline]
+    fn mem_read_u16(&self, addr: u16) -> u16 {
+        self.bus.mem_read_u16(addr)
+    }
+
+    #[inline]
+    fn mem_write_u16(&mut self, addr: u16, data: u16) {
+        self.bus.mem_write_u16(addr, data)
     }
 }
